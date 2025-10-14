@@ -1,0 +1,42 @@
+/*style.css*/
+body{
+    background-color:lightgray;
+    display: flex;
+    justify-content: center; /*horizontal alignment*/
+    align-items: center; /*vertical alignment*/
+    height: 100vh; /*full viewport height*/
+    margin: 0; /*remove default margin*/
+}
+.home-link{
+	position: absolute;
+	top: 10px;
+	right: 10px;
+}
+.login-container{
+	background-color: white;
+	border: 2px solid black;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	font-family: Arial, sans-serif;
+	width: 300px;
+	padding: 20px;
+	margin:20px;
+}
+
+.input-row{
+	display: flex;
+    /*vertical alignment*/
+    flex-direction: column;
+    justify-content: space-between;/*horizontal alignment*/
+    width: 100%;
+    margin-bottom: 15px;
+}
+.input-row label{
+	margin-bottom:5px;/*to give space between input and label*/
+}
+.register-link{
+	color:black;
+	font-weight:bold; 
+	font-size:12px;
+}
