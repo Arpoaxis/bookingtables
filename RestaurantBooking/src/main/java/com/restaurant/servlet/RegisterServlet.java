@@ -17,6 +17,8 @@ public class RegisterServlet extends HttpServlet {
     }
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
     throws ServletException, IOException{
+    	
+    	
     	//get username, password and confirm password from the form
         String username = request.getParameter("username");
         String password = request.getParameter("password");
