@@ -16,13 +16,16 @@
 		<servlet-name>RegisterServlet</servlet-name>
 		<servlet-class>com.restaurant.servlet.RegisterServlet</servlet-class>
 	</servlet>
+	<servlet>
+		<servlet-name>LogoutServlet</servlet-name>
+		<servlet-class>com.restaurant.servlet.LogoutServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>TestServlet</servlet-name>
+		<servlet-class>com.restaurant.servlet.TestServlet</servlet-class>
+	</servlet>
 
-	<servlet-mapping>
-		<servlet-name>LoginServlet</servlet-name>
-		<url-pattern>/jsp/Login/login_page</url-pattern>
-	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>RegisterServlet</servlet-name>
-		<url-pattern>/jsp/Login/register</url-pattern>
-	</servlet-mapping>
+	<listener>
+		<listener-class>com.restaurant.listeners.DatabaseInitializer</listener-class>
+	</listener>
 </web-app>
