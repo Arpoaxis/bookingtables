@@ -11,6 +11,7 @@
 		<servlet-name>LoginServlet</servlet-name>
 		<servlet-class>com.restaurant.servlet.LoginServlet</servlet-class>
 	</servlet>
+	
 	<servlet>
 		<servlet-name>RegisterServlet</servlet-name>
 		<servlet-class>com.restaurant.servlet.RegisterServlet</servlet-class>

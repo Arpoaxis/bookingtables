@@ -15,11 +15,13 @@
 	<h1> Log In</h1>
 	<form action="<%=request.getContextPath()%>/login" method="post">
 	<div class="input-row">
-	    <label for="username">Username:</label><input type="text" id="username" name="username">
+	    <label for="username">Username:</label>
+	    <input type="text" id="username" name="username">
 	</div>
 	<div class="input-row">
-	    <label for="password">Password:</label><input type= "password" name = "password"/>
-	    </div>
+	    <label for="password">Password:</label>
+	    <input type= "password" name = "password"/>
+	</div>
 	    <input type="submit" value="Login"/>
 		
 	<% if (request.getParameter("error") != null) { %>
