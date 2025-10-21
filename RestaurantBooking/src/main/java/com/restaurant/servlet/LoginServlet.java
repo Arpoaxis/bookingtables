@@ -14,16 +14,16 @@ import com.restaurant.dao.LoginDao;
 			protected void doPost(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
 				 
-				// Retrieve username and password from the form
-				String username =request.getParameter("username");
+				// Retrieve email and password from the form
+				String email = request.getParameter("email");
 				String password =request.getParameter("password");
 				//get the path of the database
 				String dbpath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
 				////Authentication with database
-				if(LoginDao.validate(username, password,dbpath)){
+				if(LoginDao.validate(email, password,dbpath)){
 					//if authentication is successful create a session 
 					HttpSession session = request.getSession();
-					session.setAttribute("username", username);
+					session.setAttribute("email", email);
 					//redirect to index page
 					response.sendRedirect(request.getContextPath() + "/jsp/index.jsp");
 				}else{
