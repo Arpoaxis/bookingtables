@@ -20,9 +20,11 @@ public class RegisterServlet extends HttpServlet {
     }
     
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-    		throws ServletException, IOException{
+    throws ServletException, IOException{
     	
-        String email = request.getParameter("email");
+    	
+    	//get username, password and confirm password from the form
+        String username = request.getParameter("username");
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
         String account_type = request.getParameter("account_type");
