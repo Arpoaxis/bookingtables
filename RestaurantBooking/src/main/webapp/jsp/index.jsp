@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html lang="en">
 <head> 
     <meta charset="UTF-8">
@@ -7,11 +8,14 @@
     
 </head>
 <body>
-	<% String username = (String) session.getAttribute("username");%>
+	<% String email = (String) session.getAttribute("email");%>
 	<h1>Welcome to Restaurant Booking!</h1>
-	<% if (username != null) { %>
-	<!-- User is logged in-->
-	<p>Welcome, <%= username %>!</p>
+	<% if (email != null) { %>
+	<c:if test="${sessionScope.user.accountType == 'Business'}">
+    <c:url value="/admin/dashboard" var="adminUrl" />
+    <a href="${adminUrl}">Administrator Dash-board</a>
+</c:if>
+	<p>Welcome, <%= email %>!</p>
 	<p><a href="<%=request.getContextPath()%>/LogoutServlet">Logout</a></p>
 	<% } else { %>
 	<!-- User is not logged in -->
