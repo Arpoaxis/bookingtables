@@ -16,11 +16,13 @@
 	<h1> Log In</h1>
 	<form action="<%=request.getContextPath()%>/login" method="post">
 	<div class="input-row">
-	    <label for="email">Email:</label><input type="email" id="email" name="email" required>
+	    <label for="username">Username:</label>
+	    <input type="text" id="username" name="username">
 	</div>
 	<div class="input-row">
-	    <label for="password">Password:</label><input type= "password" name = "password" required/>
-	    </div>
+	    <label for="password">Password:</label>
+	    <input type= "password" name = "password"/>
+	</div>
 	    <input type="submit" value="Login"/>
 		<c:if test="${not empty error}">
 		    <p style="color:red;">${error}</p>
