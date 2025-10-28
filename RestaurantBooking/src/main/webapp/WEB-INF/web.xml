@@ -23,6 +23,10 @@
 		<servlet-name>TestServlet</servlet-name>
 		<servlet-class>com.restaurant.servlet.TestServlet</servlet-class>
 	</servlet>
+	<servlet>
+		<servlet-name>AccountTypeServlet</servlet-name>
+		<servlet-class>com.restaurant.servlet.AccountTypeServlet</servlet-class>
+		</servlet>
 
 	<listener>
 		<listener-class>com.restaurant.listeners.DatabaseInitializer</listener-class>

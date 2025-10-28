@@ -14,24 +14,21 @@
     	<h1>Register</h1>
     	
     	<form action="<%= request.getContextPath() %>/register" method="post">
-    	
-    		<label for="account_type">Account Type:</label>
-			<select name="account_type" id="account_type" required>
-			    <c:forTokens items="Personal,Business" delims="," var="account_type">
-			        <option value="${account_type}"><c:out value="${account_type}"/></option>
-			    </c:forTokens>
-			</select>
-            <br>
-    		
     		<Label for="email">Email:</Label>
-    		<input type="email" name="email" id="email" required>
-    		<br>
-    		<Label for="FirstName">First Name:</Label>
-    		<input type="text" name="FirstName" id="FirstName" required>
-    		<br>
-    		<Label for="LastName">Last Name:</Label>
-    		<input type="text" name="LastName" id="LastName" required>
-    		<br>
+        	<input type="email" name="email" id="email" required>
+        	<br>
+        	
+            <c:if test="${accountType == 'personal'}">
+            <input type="hidden" name="account_type" value="personal" />
+            <p>Selected account type: <c:out value="${accountType}"/></p>
+        	
+        	<Label for="FirstName">First Name:</Label>
+        	<input type="text" name="FirstName" id="FirstName" required>
+        	<br>
+        	<Label for="LastName">Last Name:</Label>
+        	<input type="text" name="LastName" id="LastName" required>
+        	<br>
+        	</c:if>
     		<Label for="PhoneNumber">Phone Number:</Label>
     		<input type="text" name="PhoneNumber" id="PhoneNumber" required>
     	    <br>
@@ -41,7 +38,9 @@
     		<Label for="confirmPassword">Confirm Password:</Label>
     		<input type="password" name="confirmPassword" id="confirmPassword" required>
     		<input type="submit" value="Register">
-    		<% if (request.getAttribute("error") != null) { %> <p style="color:red;"><%= request.getAttribute("error") %></p> <% } %>
+    		<c:if test="${not empty error}">
+		    	<p style="color:red;">${error}</p>
+			</c:if>
     	</form>
     	<p>Already have an account then <a href="<%= request.getContextPath() %>/jsp/Login/login_page.jsp">Login here</a></p>
     </div>

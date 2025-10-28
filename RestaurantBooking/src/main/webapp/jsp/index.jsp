@@ -11,9 +11,9 @@
 	<% String email = (String) session.getAttribute("email");%>
 	<h1>Welcome to Restaurant Booking!</h1>
 	<% if (email != null) { %>
-	<!-- User is logged in-->
 	<c:if test="${sessionScope.user.accountType == 'Business'}">
-    <a href="/admin/dashboard">Administrator Dash-board</a>
+    <c:url value="/admin/dashboard" var="adminUrl" />
+    <a href="${adminUrl}">Administrator Dash-board</a>
 </c:if>
 	<p>Welcome, <%= email %>!</p>
 	<p><a href="<%=request.getContextPath()%>/LogoutServlet">Logout</a></p>

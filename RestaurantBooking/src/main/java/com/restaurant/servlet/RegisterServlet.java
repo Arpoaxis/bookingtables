@@ -31,7 +31,12 @@ public class RegisterServlet extends HttpServlet {
         String last_name = request.getParameter("LastName");
         
         String dbpath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
-       
+        //check account type
+        if (account_type == null || account_type.isEmpty()) {
+			request.setAttribute("error", "Please select an account type.");
+			request.getRequestDispatcher("/jsp/Login/register.jsp").forward(request, response);
+			return;
+		}
         // Check for password mismatch first
         if (!password.equals(confirmPassword)) {
             request.setAttribute("error", "Passwords do not match.");
