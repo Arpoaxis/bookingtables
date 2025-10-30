@@ -5,29 +5,45 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import com.restaurant.model.User;
 
 public class LoginDao {
-	public static boolean validate(String username, String password, String dbPath) {
-		boolean status =false;
-		try {
-			Class.forName("org.sqlite.JDBC");
-			//get the path of the database
-			String url = "jdbc:sqlite:" + dbPath;
-			//create a connection to the database
-			try (Connection connection = DriverManager.getConnection(url);
-				//create a prepared statement
-				PreparedStatement ps = connection.prepareStatement("select * from users where username=? and password=?")) {
-				ps.setString(1, username);
-				ps.setString(2, password);
-				try (ResultSet resultSet = ps.executeQuery()){
-					//user is valid
-					status = resultSet.next();
-					}
-			
-			}
-		} catch (SQLException | ClassNotFoundException e) {
+
+    public static User validate(String email, String password, String dbPath) {
+        User user = null;
+        try {
+            Class.forName("org.sqlite.JDBC");
+            String url = "jdbc:sqlite:" + dbPath;
+
+            try (Connection connection = DriverManager.getConnection(url);
+                 PreparedStatement ps = connection.prepareStatement(
+                     "SELECT u.user_id, u.email, u.password, r.account_type " +
+                     "FROM user u JOIN roles r ON u.user_id = r.user_id " +
+                     "WHERE u.email = ?")) {
+
+                ps.setString(1, email);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String storedPassword = rs.getString("password");
+
+                        //Compare with entered password
+                        if (storedPassword.equals(password)) {
+                            String accountType = rs.getString("account_type");
+
+                            // Create user object and populate it
+                            user = new User();
+                            user.setEmail(email);
+                            user.setPassword(password);
+                            user.setAccountType(accountType);
+                        }
+                    }
+                }
+            }
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-		return status;
-	}
+
+        return user; // null means invalid credentials
+    }
 }

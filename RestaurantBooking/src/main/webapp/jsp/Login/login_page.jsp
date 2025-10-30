@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <!DOCTYPE html>
 <html>
@@ -23,21 +24,20 @@
 	    <input type= "password" name = "password"/>
 	</div>
 	    <input type="submit" value="Login"/>
-		
-	<% if (request.getParameter("error") != null) { %>
-	    <div class="error-message">
-	        <p style="color:red">Invalid username or password.</p>
-	    </div>
-	<% } %>
+		<c:if test="${not empty error}">
+		    <p style="color:red;">${error}</p>
+		</c:if>
+	
 	    </form>
 	    
 	 <div class="register-link">
 	 <p> 
-	 	Don't have an account: <a href="<%= request.getContextPath() %>/jsp/Login/register.jsp">Register</a>
-	 	</p>
-	 
-	 </div>
-	 </div>
+ 	 	<!-- Use a context-path-aware link so the JSP is found after deployment -->
+ 	 	Don't have an account: <a href="<%=request.getContextPath()%>/jsp/Login/account_type.jsp">Register</a>
+ 	 	</p>
+ 	 
+ 	 </div>
+ 	 </div>
 
 
 </body>
