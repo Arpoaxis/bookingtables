@@ -21,6 +21,7 @@
     		<br>
     		<Label for="confirmPassword">Confirm Password</Label>
     		<input type="password" name="confirmPassword" id="confirmPassword" required>
+    		<br>
     		<input type="submit" value="Register">
     		<% if (request.getAttribute("error") != null) { %> <p style="color:red;"><%= request.getAttribute("error") %></p> <% } %>
     	</form>
