@@ -37,6 +37,7 @@
     		<br>
     		<Label for="confirmPassword">Confirm Password:</Label>
     		<input type="password" name="confirmPassword" id="confirmPassword" required>
+    		<br>
     		<input type="submit" value="Register">
     		<c:if test="${not empty error}">
 		    	<p style="color:red;">${error}</p>
