@@ -1,1 +1,23 @@
-/bin/
+# Eclipse
+.project
+.classpath
+.settings/
+.metadata/
+Servers/
+
+# Build output
+bin/
+build/
+target/
+wtpwebapps/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# DB (runtime only)
+*.db
+*.db-journal
+
+# Logs
+*.log
