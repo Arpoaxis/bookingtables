@@ -10,8 +10,8 @@
 <body>
   <h1>Welcome to Restaurant Booking!</h1>
 
+  <!-- user is logged in if we have an email in session -->
   <c:choose>
-    <!-- user is logged in if we have an email in session -->
     <c:when test="${not empty sessionScope.email}">
       <!-- Optional admin link for business accounts -->
       <c:if test="${sessionScope.user != null and sessionScope.user.accountType == 'Business'}">
