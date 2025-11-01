@@ -28,4 +28,10 @@
 	<listener>
 		<listener-class>com.restaurant.listeners.DatabaseInitializer</listener-class>
 	</listener>
+	
+	<context-param>
+  		<param-name>resetDatabaseOnStartup</param-name>
+  		<param-value>true</param-value>
+	</context-param>
+	
 </web-app>
