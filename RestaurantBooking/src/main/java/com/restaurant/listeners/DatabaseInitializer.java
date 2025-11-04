@@ -187,10 +187,6 @@ public class DatabaseInitializer implements ServletContextListener {
 
                     
                     stmt.executeUpdate("""
-                        INSERT OR IGNORE INTO user_roles(role_name)
-                        VALUES ('ADMIN'), ('HOST'), ('CUSTOMER');
-                    """);
-                    stmt.executeUpdate("""
                         INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active)
                         VALUES (1, 'admin', 'Admin', 'User', 'admin@example.com', 'admin', '0000000000', 1);
                     """);
@@ -200,6 +196,11 @@ public class DatabaseInitializer implements ServletContextListener {
                         SELECT 1, role_id FROM user_roles WHERE role_name='ADMIN';
                     """);
 
+                    stmt.executeUpdate("""
+                    		  INSERT OR IGNORE INTO user_roles(role_name)
+                    		  VALUES('ADMIN'),('MANAGER'),('EMPLOYEE'),('HOST'),('CUSTOMER');
+                    		""");
+                    
                     conn.commit();
                 } catch (Exception ex) {
                     conn.rollback();
@@ -208,10 +209,130 @@ public class DatabaseInitializer implements ServletContextListener {
                     conn.setAutoCommit(true);
                 }
             }
-
-            System.out.println("✅ Database ready at: " + dbFile.getAbsolutePath());
+            try {
+                loadUsersFromCsv(sce.getServletContext(), "/WEB-INF/data/users.csv", url);
+                loadUserRolesFromCsv(sce.getServletContext(), "/WEB-INF/data/user_roles.csv", url);
+                System.out.println("✅ CSV seed data loaded.");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            System.out.println("Database ready at: " + dbFile.getAbsolutePath());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        
+    }
+
+    private void loadUsersFromCsv(jakarta.servlet.ServletContext ctx, String resourcePath, String url) throws Exception {
+        try (java.io.InputStream in = ctx.getResourceAsStream(resourcePath)) {
+            if (in == null) {
+                System.out.println("No CSV found at " + resourcePath + " (skipping user seed).");
+                return;
+            }
+            try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(in));
+                 java.sql.Connection conn = java.sql.DriverManager.getConnection(url)) {
+
+                // honor FKs during insert
+                try (java.sql.Statement s = conn.createStatement()) {
+                    s.execute("PRAGMA foreign_keys = ON;");
+                }
+
+                conn.setAutoCommit(false);
+                String line;
+                boolean headerSkipped = false;
+
+                String sql = """
+                    INSERT OR IGNORE INTO users
+                    (username, first_name, last_name, email, password, phone_number, created, active)
+                    VALUES (?,?,?,?,?,?,?,?)
+                """;
+                try (java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+                    while ((line = br.readLine()) != null) {
+                        // skip header
+                        if (!headerSkipped) { headerSkipped = true; continue; }
+                        // split CSV line; your sample has no quoted commas
+                        String[] p = line.split(",", -1);
+                        if (p.length < 8) continue;
+
+                        String username   = p[0].trim();
+                        String firstName  = p[1].trim();
+                        String lastName   = p[2].trim();
+                        String email      = p[3].trim().toLowerCase();
+                        String password   = p[4].trim();
+                        String phone      = p[5].trim();
+                        String created    = p[6].trim();              // e.g. "2025-03-20 17:18:24"
+                        int active        = Integer.parseInt(p[7].trim()); // 0 or 1
+
+                        ps.setString(1, username);
+                        ps.setString(2, firstName);
+                        ps.setString(3, lastName);
+                        ps.setString(4, email);
+                        ps.setString(5, password);  // TODO: hash later
+                        ps.setString(6, phone);
+                        ps.setString(7, created);
+                        ps.setInt(8, active);
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                } catch (Exception ex) {
+                    conn.rollback();
+                    throw ex;
+                } finally {
+                    conn.commit();
+                    conn.setAutoCommit(true);
+                }
+            }
+        }
+    }
+    private void loadUserRolesFromCsv(jakarta.servlet.ServletContext ctx, String resourcePath, String url) throws Exception {
+        try (java.io.InputStream in = ctx.getResourceAsStream(resourcePath)) {
+            if (in == null) {
+                System.out.println("No CSV found at " + resourcePath + " (skipping user_roles seed).");
+                return;
+            }
+            try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(in));
+                 java.sql.Connection conn = java.sql.DriverManager.getConnection(url)) {
+
+                try (java.sql.Statement s = conn.createStatement()) {
+                    s.execute("PRAGMA foreign_keys = ON;");
+                }
+
+                conn.setAutoCommit(false);
+                String line;
+                boolean headerSkipped = false;
+
+                while ((line = br.readLine()) != null) {
+                    if (!headerSkipped) { headerSkipped = true; continue; }
+                    String[] p = line.split(",", -1);
+                    if (p.length < 2) continue;
+
+                    String email = p[0].trim().toLowerCase();
+                    String roleName = p[1].trim().toUpperCase();
+
+                    // look up IDs
+                    Integer userId = null, roleId = null;
+                    try (var ps = conn.prepareStatement("SELECT user_id FROM users WHERE email=?")) {
+                        ps.setString(1, email);
+                        try (var rs = ps.executeQuery()) { if (rs.next()) userId = rs.getInt(1); }
+                    }
+                    try (var ps = conn.prepareStatement("SELECT role_id FROM user_roles WHERE role_name=?")) {
+                        ps.setString(1, roleName);
+                        try (var rs = ps.executeQuery()) { if (rs.next()) roleId = rs.getInt(1); }
+                    }
+
+                    if (userId != null && roleId != null) {
+                        try (var ps = conn.prepareStatement("""
+                            INSERT OR IGNORE INTO users_to_user_roles(user_id, role_id) VALUES(?,?)
+                        """)) {
+                            ps.setInt(1, userId);
+                            ps.setInt(2, roleId);
+                            ps.executeUpdate();
+                        }
+                    }
+                }
+                conn.commit();
+                conn.setAutoCommit(true);
+            }
         }
     }
 
