@@ -17,9 +17,13 @@ public class LoginDao {
 
             try (Connection connection = DriverManager.getConnection(url);
                  PreparedStatement ps = connection.prepareStatement(
-                     "SELECT u.user_id, u.email, u.password, r.account_type " +
-                     "FROM user u JOIN roles r ON u.user_id = r.user_id " +
-                     "WHERE u.email = ?")) {
+                     // Fixed SQL: correct table names, aliases and spacing
+                     "SELECT u.user_id, u.email, u.password, r.role_name " +
+                     "FROM users u " +
+                     "JOIN users_to_user_roles ur ON u.user_id = ur.user_id " +
+                     "JOIN user_roles r ON ur.role_id = r.role_id " +
+                     "WHERE u.email = ?"
+                 )) {
 
                 ps.setString(1, email);
 
@@ -27,9 +31,9 @@ public class LoginDao {
                     if (rs.next()) {
                         String storedPassword = rs.getString("password");
 
-                        //Compare with entered password
-                        if (storedPassword.equals(password)) {
-                            String accountType = rs.getString("account_type");
+                        // Compare with entered password (stored passwords are plain text in DB for this example)
+                        if (storedPassword != null && storedPassword.equals(password)) {
+                            String accountType = rs.getString("role_name");
 
                             // Create user object and populate it
                             user = new User();

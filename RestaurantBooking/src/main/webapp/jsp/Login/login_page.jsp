@@ -1,8 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-
-
-
-
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,9 +15,9 @@
 	<h1> Log In</h1>
 	<form action="<%=request.getContextPath()%>/login" method="post">
 	<div class="input-row">
-	    <label for="username">Username:</label>
-	    <input type="text" id="username" name="username">
-	</div>
+	    <Label for="email">Email:</Label>
+	    <input type="text" name="email"/>
+	    </div>
 	<div class="input-row">
 	    <label for="password">Password:</label>
 	    <input type= "password" name = "password"/>
@@ -35,7 +32,8 @@
 	 <div class="register-link">
 	 <p> 
  	 	<!-- Use a context-path-aware link so the JSP is found after deployment -->
- 	 	Don't have an account: <a href="<%=request.getContextPath()%>/jsp/Login/account_type.jsp">Register</a>
+ 	 	<!--Don't have an account: <a href="<%=request.getContextPath()%>/jsp/Login/account_type.jsp">Register</a> -->
+ 	 	Don't have an account:<a href="<%=request.getContextPath()%>/jsp/Login/register.jsp">Register</a>
  	 	</p>
  	 
  	 </div>

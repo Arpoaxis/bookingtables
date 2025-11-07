@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 
 <!DOCTYPE html>
@@ -20,9 +20,9 @@
         	<input type="email" name="email" id="email" required>
         	<br>
         	
-            <c:if test="${accountType == 'personal'}">
+            <!-- <c:if test="${accountType == 'personal'}">
             <input type="hidden" name="account_type" value="personal" />
-            <p>Selected account type: <c:out value="${accountType}"/></p>
+            <p>Selected account type: <c:out value="${accountType}"/></p>-->
         	
         	<Label for="FirstName">First Name:</Label>
         	<input type="text" name="FirstName" id="FirstName" required>
@@ -30,7 +30,7 @@
         	<Label for="LastName">Last Name:</Label>
         	<input type="text" name="LastName" id="LastName" required>
         	<br>
-        	</c:if>
+        	<!-- </c:if>-->
     		<Label for="PhoneNumber">Phone Number:</Label>
     		<input type="text" name="PhoneNumber" id="PhoneNumber" required>
     	    <br>

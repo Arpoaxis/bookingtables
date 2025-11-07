@@ -10,7 +10,7 @@ public class RegisterDao {
     public static String register(String email, String password, String account_type,
                                   long phone_number, String first_name, String last_name, String dbpath) {
 
-        ResultSet rs = null;
+        
         Connection connection = null;
 
         try {
@@ -24,7 +24,7 @@ public class RegisterDao {
             connection.setAutoCommit(false);
 
             //Check if email already exists
-            try (PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM user WHERE email=?")) {
+            try (PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM users WHERE email=?")) {
                 ps.setString(1, email);
                 try (ResultSet result = ps.executeQuery()) {
                     if (result.next()) {
@@ -42,7 +42,7 @@ public class RegisterDao {
                 ps.setString(2, last_name);
                 ps.setString(3, email);
                 ps.setString(4, password);
-                ps.setLong(5, phone_number);
+                ps.setString(5, String.valueOf(phone_number));
 
                 int rowsAffected = ps.executeUpdate();
                 if (rowsAffected == 0) {
@@ -50,20 +50,38 @@ public class RegisterDao {
                     return "FAIL";
                 }
 
-                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        userId = generatedKeys.getInt(1);
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        userId = keys.getInt(1);
+                    } else {
+                    	return "FAIL";
                     }
                 }
             }
 
-            //Insert into roles table
-            String insert_role = "INSERT INTO roles (user_id, account_type) VALUES (?, ?)";
-            try (PreparedStatement ps_role = connection.prepareStatement(insert_role)) {
-                ps_role.setInt(1, userId);
-                ps_role.setString(2, account_type);
-                ps_role.executeUpdate();
+            //Get role id
+            int role_id = -1;
+            String get_role_id="SELECT role_id FROM user_roles WHERE role_name=?";
+            try (PreparedStatement ps= connection.prepareStatement(get_role_id)) {
+               ps.setString(1, account_type.toUpperCase());
+               try (ResultSet role_rs = ps.executeQuery()) {
+				   if (role_rs.next()) {
+					   role_id = role_rs.getInt("role_id");
+				   } else {
+					   return "FAIL";
+				   }
+			   }
             }
+            //Assign role to user
+            String link_role="INSERT INTO users_roles(user_id, role_id) VALUES (?, ?)";
+            try (PreparedStatement ps= connection.prepareStatement(link_role)) {
+				ps.setInt(1, userId);
+				ps.setInt(2, role_id);
+				int rows= ps.executeUpdate();
+				if (rows==0) {
+					return "FAIL";
+				}
+			}
 
             //Commit
             connection.commit();
@@ -81,12 +99,12 @@ public class RegisterDao {
             return "FAIL";
 
         } finally {
-            try {
-                if (rs != null) rs.close();
-                if (connection != null) connection.setAutoCommit(true);
-                if (connection != null) connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
+            if (connection != null) {
+				try {
+					connection.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
             }
         }
     }
