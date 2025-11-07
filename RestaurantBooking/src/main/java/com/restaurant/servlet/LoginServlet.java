@@ -23,8 +23,8 @@ public class LoginServlet extends HttpServlet {
 			session.setAttribute("user", user);
 
 			// Redirect based on role
-			if ("business".equalsIgnoreCase(user.getAccountType())) {
-				response.sendRedirect(request.getContextPath() + "/jsp/index.jsp");
+			if ("ADMIN".equalsIgnoreCase(user.getAccountType())) {
+				response.sendRedirect(request.getContextPath() + "/jsp/admin/dashboard.jsp");
 			} else {
 				response.sendRedirect(request.getContextPath() + "/jsp/index.jsp");
 			}
