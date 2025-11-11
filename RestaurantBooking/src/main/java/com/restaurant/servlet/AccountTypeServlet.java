@@ -21,6 +21,6 @@ public class AccountTypeServlet extends HttpServlet {
         request.setAttribute("accountType", accountType);
         
         // 3. Forward the request to the registration details page
-        request.getRequestDispatcher("/jsp/Login/register.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/jsp/Login/register.jsp").forward(request, response);
     }
 }

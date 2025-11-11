@@ -32,7 +32,7 @@ public class LoginServlet extends HttpServlet {
 		}
         else {
         	request.setAttribute("error", "Invalid email or password.");
-			request.getRequestDispatcher("/jsp/Login/login_page.jsp").forward(request, response);
+			request.getRequestDispatcher("/WEB-INF/jsp/Login/login_page.jsp").forward(request, response);
         }
     }
 }

@@ -1,10 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <web-app id="WebApp_ID" version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" 
 			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 			xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
 	<display-name>RestaurantBooking</display-name>
 <welcome-file-list>
-		<welcome-file>jsp/index.jsp</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>
 
 	<servlet>
@@ -31,7 +30,20 @@
 	
 	<context-param>
   		<param-name>resetDatabaseOnStartup</param-name>
-  		<param-value>false</param-value>
+  		<param-value>true</param-value>
 	</context-param>
-	
+	<filter>
+  		<filter-name>EncodingFilter</filter-name>
+  		<filter-class>com.restaurant.filter.EncodingFilter</filter-class>
+  		<init-param>
+    		<param-name>encoding</param-name>
+    		<param-value>UTF-8</param-value>
+  		</init-param>
+	</filter>
+
+	<filter-mapping>
+ 		<filter-name>EncodingFilter</filter-name>
+  		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
 </web-app>

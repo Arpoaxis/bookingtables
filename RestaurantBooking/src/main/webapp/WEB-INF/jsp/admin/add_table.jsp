@@ -22,7 +22,7 @@
 
 <body>
 	<div class="home-link">
-	    <jsp:include page="/jsp/header.jsp"/>
+	    <jsp:include page="/WEB-INF/jsp/header.jsp"/>
 	  </div>
 	<h2>Add New Table</h2>
     <form action="<%=request.getContextPath()%>/admin/add_table" method="post">

@@ -11,7 +11,7 @@
 <body>
   <div class="home-link">
   
-    <jsp:include page="/jsp/header.jsp"/>
+    <jsp:include page="/WEB-INF/jsp/header.jsp"/>
   </div>
 
   <div class="dashboard-container">

@@ -27,7 +27,7 @@ public class AddTableServlet extends HttpServlet {
          if (tableNumStr == null || minStr == null || maxStr == null ||
 			 tableNumStr.isEmpty() || minStr.isEmpty() || maxStr.isEmpty()) {
 			 request.setAttribute("error", "All numeric fields are required.");
-			 RequestDispatcher rd = request.getRequestDispatcher("/jsp/admin/add_table.jsp");
+			 RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/jsp/admin/add_table.jsp");
 			 rd.forward(request, response);
 			 return;
 		 }
