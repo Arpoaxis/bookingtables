@@ -1,23 +1,32 @@
-# Eclipse
-**/.project
-**/.classpath
-**/.settings/
+# --- Build output ---
+/target/
+**/target/
+
+# --- Eclipse workspace metadata ---
+.classpath
+.project
+.settings/
 .metadata/
-Servers/
+bin/
 
-# Build output
-**/bin/
-**/build/
-target/
-wtpwebapps/
+# --- IntelliJ / JetBrains IDE ---
+.idea/
+*.iml
+out/
 
-# OS
+# --- OS-specific junk ---
 .DS_Store
 Thumbs.db
 
-# DB (runtime only)
-*.db
-*.db-journal
-
-# Logs
+# --- Logs and temporary files ---
 *.log
+*.tmp
+
+# --- SQLite database ---
+# The app creates this automatically at runtime
+WEB-INF/database/
+*.db
+
+# --- Environment / config files (optional) ---
+*.env
+*.local
