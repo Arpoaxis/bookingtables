@@ -30,8 +30,18 @@
 	
 	<context-param>
   		<param-name>resetDatabaseOnStartup</param-name>
-  		<param-value>true</param-value>
+  		<param-value>false</param-value>
 	</context-param>
+
+	<!-- Session configuration for security -->
+	<session-config>
+		<session-timeout>30</session-timeout> <!-- 30 minutes -->
+		<cookie-config>
+			<http-only>true</http-only>
+			<secure>false</secure> <!-- Set to true in production with HTTPS -->
+		</cookie-config>
+		<tracking-mode>COOKIE</tracking-mode>
+	</session-config>
 	<filter>
   		<filter-name>EncodingFilter</filter-name>
   		<filter-class>com.restaurant.filter.EncodingFilter</filter-class>

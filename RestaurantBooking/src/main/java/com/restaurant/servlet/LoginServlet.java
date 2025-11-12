@@ -18,9 +18,18 @@ public class LoginServlet extends HttpServlet {
         String dbpath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
         User user = LoginDao.validate(email, password, dbpath);
         if (user != null) {
-			// Create session and store user
-			HttpSession session = request.getSession();
+			// Prevent session fixation attack: invalidate old session and create new one
+			HttpSession oldSession = request.getSession(false);
+			if (oldSession != null) {
+				oldSession.invalidate();
+			}
+
+			// Create new session and store user
+			HttpSession session = request.getSession(true);
 			session.setAttribute("user", user);
+
+			// Set session timeout (30 minutes)
+			session.setMaxInactiveInterval(30 * 60);
 
 			// Redirect based on role
 			if ("ADMIN".equalsIgnoreCase(user.getAccountType())) {
