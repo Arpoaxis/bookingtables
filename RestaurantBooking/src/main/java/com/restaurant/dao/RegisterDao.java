@@ -5,8 +5,12 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import com.restaurant.util.PasswordUtil;
 
 public class RegisterDao {
+    private static final Logger LOGGER = Logger.getLogger(RegisterDao.class.getName());
     public static String register(String email, String password, String account_type,
                                   long phone_number, String first_name, String last_name, String dbpath) {
 
@@ -35,14 +39,20 @@ public class RegisterDao {
 
             //Insert new user
             int userId = -1;
-            String insert_user = "INSERT INTO user (first_name, last_name, email, password, phone_number) VALUES (?, ?, ?, ?, ?)";
+            String insert_user = "INSERT INTO users (username, first_name, last_name, email, password, phone_number) VALUES (?, ?, ?, ?, ?, ?)";
 
             try (PreparedStatement ps = connection.prepareStatement(insert_user, PreparedStatement.RETURN_GENERATED_KEYS)) {
-                ps.setString(1, first_name);
-                ps.setString(2, last_name);
-                ps.setString(3, email);
-                ps.setString(4, password);
-                ps.setString(5, String.valueOf(phone_number));
+                // Generate username from email (part before @)
+                String username = email.substring(0, email.indexOf('@'));
+                // Hash the password before storing
+                String hashedPassword = PasswordUtil.hashPassword(password);
+
+                ps.setString(1, username);
+                ps.setString(2, first_name);
+                ps.setString(3, last_name);
+                ps.setString(4, email);
+                ps.setString(5, hashedPassword);
+                ps.setString(6, String.valueOf(phone_number));
 
                 int rowsAffected = ps.executeUpdate();
                 if (rowsAffected == 0) {
@@ -73,7 +83,7 @@ public class RegisterDao {
 			   }
             }
             //Assign role to user
-            String link_role="INSERT INTO users_roles(user_id, role_id) VALUES (?, ?)";
+            String link_role="INSERT INTO users_to_user_roles(user_id, role_id) VALUES (?, ?)";
             try (PreparedStatement ps= connection.prepareStatement(link_role)) {
 				ps.setInt(1, userId);
 				ps.setInt(2, role_id);
@@ -87,15 +97,18 @@ public class RegisterDao {
             connection.commit();
             return "SUCCESS";
 
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during user registration", e);
             if (connection != null) {
                 try {
                     connection.rollback();
                 } catch (SQLException ex) {
-                    ex.printStackTrace();
+                    LOGGER.log(Level.SEVERE, "Error rolling back transaction", ex);
                 }
             }
+            return "FAIL";
+        } catch (ClassNotFoundException e) {
+            LOGGER.log(Level.SEVERE, "JDBC driver not found", e);
             return "FAIL";
 
         } finally {
@@ -103,7 +116,7 @@ public class RegisterDao {
 				try {
 					connection.close();
 				} catch (SQLException e) {
-					e.printStackTrace();
+					LOGGER.log(Level.WARNING, "Error closing database connection", e);
 				}
             }
         }
