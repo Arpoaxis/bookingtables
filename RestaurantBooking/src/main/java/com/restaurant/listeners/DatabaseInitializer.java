@@ -8,6 +8,7 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import com.restaurant.util.PasswordUtil;
 
 @WebListener
 public class DatabaseInitializer implements ServletContextListener {
@@ -185,21 +186,27 @@ public class DatabaseInitializer implements ServletContextListener {
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_waitlists_user ON waitlists(user_id);");
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_waitlists_host ON waitlists(host_id);");
 
-                    
+
+                    // Hash the default admin password
+                    String adminPassword = PasswordUtil.hashPassword("Admin@123");
+
                     stmt.executeUpdate("""
-                        INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active)
-                        VALUES (1, 'admin', 'Admin', 'User', 'admin@example.com', 'admin', '0000000000', 1);
+                        INSERT OR IGNORE INTO user_roles(role_name)
+                        VALUES('ADMIN'),('MANAGER'),('EMPLOYEE'),('HOST'),('CUSTOMER');
                     """);
-                    
+
+                    // Use PreparedStatement for admin user to safely insert hashed password
+                    try (java.sql.PreparedStatement ps = conn.prepareStatement(
+                        "INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active) " +
+                        "VALUES (1, 'admin', 'Admin', 'User', 'admin@example.com', ?, '0000000000', 1)")) {
+                        ps.setString(1, adminPassword);
+                        ps.executeUpdate();
+                    }
+
                     stmt.executeUpdate("""
                         INSERT OR IGNORE INTO users_to_user_roles(user_id, role_id)
                         SELECT 1, role_id FROM user_roles WHERE role_name='ADMIN';
                     """);
-
-                    stmt.executeUpdate("""
-                    		  INSERT OR IGNORE INTO user_roles(role_name)
-                    		  VALUES('ADMIN'),('MANAGER'),('EMPLOYEE'),('HOST'),('CUSTOMER');
-                    		""");
                     
                     conn.commit();
                 } catch (Exception ex) {
@@ -268,11 +275,14 @@ public class DatabaseInitializer implements ServletContextListener {
                         String created    = p[6].trim();              // e.g. "2025-03-20 17:18:24"
                         int active        = Integer.parseInt(p[7].trim()); // 0 or 1
 
+                        // Hash the password before storing
+                        String hashedPassword = PasswordUtil.hashPassword(password);
+
                         ps.setString(1, username);
                         ps.setString(2, firstName);
                         ps.setString(3, lastName);
                         ps.setString(4, email);
-                        ps.setString(5, password);  // TODO: hash later
+                        ps.setString(5, hashedPassword);
                         ps.setString(6, phone);
                         ps.setString(7, created);
                         ps.setInt(8, active);

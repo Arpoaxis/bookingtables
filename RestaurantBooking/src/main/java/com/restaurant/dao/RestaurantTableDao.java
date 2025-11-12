@@ -5,7 +5,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class RestaurantTableDao {
+    private static final Logger LOGGER = Logger.getLogger(RestaurantTableDao.class.getName());
 
     private String dbUrl;
 
@@ -27,7 +31,7 @@ public class RestaurantTableDao {
             return rows > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error adding restaurant table", e);
             return false;
         }
     }

@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import com.restaurant.dao.RegisterDao;
+import com.restaurant.util.PasswordUtil;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -48,6 +49,12 @@ public class RegisterServlet extends HttpServlet {
         //Check password match
         if (password == null || !password.equals(confirmPassword)) {
             sendError(request, response, "Passwords do not match.");
+            return;
+        }
+
+        //Validate password strength
+        if (!PasswordUtil.isPasswordStrong(password)) {
+            sendError(request, response, PasswordUtil.getPasswordRequirements());
             return;
         }
 

@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.restaurant.util.CSRFUtil" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html>
@@ -26,6 +27,7 @@
 	  </div>
 	<h2>Add New Table</h2>
     <form action="<%=request.getContextPath()%>/admin/add_table" method="post">
+        <input type="hidden" name="csrf_token" value="<%= CSRFUtil.getToken(request) %>">
         <label>Table Number:</label>
         <input type="number" name="tableNumber" required><br><br>
         
