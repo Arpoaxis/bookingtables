@@ -5,26 +5,22 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.sql.Statement; 
 public class RegisterDao {
-    public static String register(String email, String password, String account_type,
-                                  long phone_number, String first_name, String last_name, String dbpath) {
+	public static String register(String email, String password, String account_type,
+            long phone_number, String first_name, String last_name, String dbpath) {
 
         
         Connection connection = null;
 
         try {
-            Class.forName("org.sqlite.JDBC");
-
-            // Build DB path
+        	Class.forName("org.sqlite.JDBC");
             String url = "jdbc:sqlite:" + dbpath;
-
-            // Connect to DB
             connection = DriverManager.getConnection(url);
             connection.setAutoCommit(false);
 
             //Check if email already exists
-            try (PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM users WHERE email=?")) {
+            try (PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM users WHERE email = ?")) {
                 ps.setString(1, email);
                 try (ResultSet result = ps.executeQuery()) {
                     if (result.next()) {
@@ -33,16 +29,17 @@ public class RegisterDao {
                 }
             }
 
+
             //Insert new user
             int userId = -1;
-            String insert_user = "INSERT INTO user (first_name, last_name, email, password, phone_number) VALUES (?, ?, ?, ?, ?)";
+            String insert_user = "INSERT INTO users (first_name, last_name, email, password, phone_number) VALUES (?, ?, ?, ?, ?)";
 
-            try (PreparedStatement ps = connection.prepareStatement(insert_user, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement ps = connection.prepareStatement(insert_user, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, first_name);
                 ps.setString(2, last_name);
                 ps.setString(3, email);
                 ps.setString(4, password);
-                ps.setString(5, String.valueOf(phone_number));
+                ps.setLong(5, phone_number);
 
                 int rowsAffected = ps.executeUpdate();
                 if (rowsAffected == 0) {
@@ -54,34 +51,38 @@ public class RegisterDao {
                     if (keys.next()) {
                         userId = keys.getInt(1);
                     } else {
-                    	return "FAIL";
+                        connection.rollback();
+                        return "FAIL";
                     }
                 }
             }
 
             //Get role id
             int role_id = -1;
-            String get_role_id="SELECT role_id FROM user_roles WHERE role_name=?";
-            try (PreparedStatement ps= connection.prepareStatement(get_role_id)) {
-               ps.setString(1, account_type.toUpperCase());
-               try (ResultSet role_rs = ps.executeQuery()) {
-				   if (role_rs.next()) {
-					   role_id = role_rs.getInt("role_id");
-				   } else {
-					   return "FAIL";
-				   }
-			   }
+            String get_role_id = "SELECT role_id FROM user_roles WHERE role_name = ?";
+            try (PreparedStatement ps = connection.prepareStatement(get_role_id)) {
+                ps.setString(1, account_type.toUpperCase());
+                try (ResultSet role_rs = ps.executeQuery()) {
+                    if (role_rs.next()) {
+                        role_id = role_rs.getInt("role_id");
+                    } else {
+                        connection.rollback();
+                        return "FAIL";
+                    }
+                }
             }
             //Assign role to user
-            String link_role="INSERT INTO users_roles(user_id, role_id) VALUES (?, ?)";
-            try (PreparedStatement ps= connection.prepareStatement(link_role)) {
-				ps.setInt(1, userId);
-				ps.setInt(2, role_id);
-				int rows= ps.executeUpdate();
-				if (rows==0) {
-					return "FAIL";
-				}
-			}
+            String link_role="INSERT INTO users_to_user_roles(user_id, role_id) VALUES (?, ?)";
+            try (PreparedStatement ps = connection.prepareStatement(link_role)) {
+                ps.setInt(1, userId);
+                ps.setInt(2, role_id);
+                int rows = ps.executeUpdate();
+                if (rows == 0) {
+                    connection.rollback();
+                    return "FAIL";
+                }
+            }
+
 
             //Commit
             connection.commit();

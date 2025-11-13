@@ -12,19 +12,20 @@
 
   <!-- user is logged in if we have an email in session -->
   <c:choose>
-    <c:when test="${not empty sessionScope.email}">
-      <!-- Optional admin link for business accounts -->
-      <c:if test="${sessionScope.user != null and sessionScope.user.accountType == 'Business'}">
-        <c:url value="/admin/dashboard" var="adminUrl"/>
-        <a href="${adminUrl}">Administrator Dashboard</a>
-      </c:if>
-
+    <c:when test="${sessionScope.email != null}">
       <p>Welcome, ${sessionScope.email}!</p>
-      <p><a href="${pageContext.request.contextPath}/LogoutServlet">Logout</a></p>
+      <c:if test="$sessionScope.user.accountType == 'Admin'}">
+      	<a href="${pageContext.request.contextPath}/jsp/Admin/admin_dashboard.jsp">Administrator Dashboard</a>
+      </c:if>
+	  <c:if test="$sessionScope.user.accountType != 'ADMIN'}">
+      	<p><a href="${pageContext.request.contextPath}/jsp/index.jsp">Homepage</a></p>
+      </c:if>
+      
+      <p><a href="${pageContext.request.contextPath}/logout ">Logout</a></p>
     </c:when>
 
     <c:otherwise>
-      <p>Please <a href="${pageContext.request.contextPath}/jsp/Login/login_page.jsp">login</a> to continue.</p>
+      <p>Please <a href="${pageContext.request.contextPath}/login">login</a> to continue.</p>
     </c:otherwise>
   </c:choose>
 </body>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Dashboard - Restaurant Booking</title>
-  <link rel="stylesheet" href="<%=request.getContextPath()%>/css/style.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 
 <body>
@@ -28,7 +28,7 @@
         <li><a href="${pageContext.request.contextPath}/jsp/admin/manage_users.jsp">Manage Tables</a></li>
       </ul>
 
-      <p><a href="${pageContext.request.contextPath}/LogoutServlet">Logout</a></p>
+      <p><a href="${pageContext.request.contextPath}/logout">Logout</a></p>
     </c:if>
 
     <c:if test="${sessionScope.user == null or sessionScope.user.accountType != 'ADMIN'}">

@@ -2,6 +2,7 @@
 			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 			xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
 	<display-name>RestaurantBooking</display-name>
+	
 <welcome-file-list>
 		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>
@@ -42,8 +43,12 @@
 	</filter>
 
 	<filter-mapping>
- 		<filter-name>EncodingFilter</filter-name>
-  		<url-pattern>/*</url-pattern>
-	</filter-mapping>
+	    <filter-name>EncodingFilter</filter-name>
+	    <url-pattern>/jsp/*</url-pattern>
+	    <url-pattern>/admin/*</url-pattern>
+	    <url-pattern>/login</url-pattern>
+	    <url-pattern>/register</url-pattern>
+	    <url-pattern>/logout</url-pattern>
+  </filter-mapping>
 
 </web-app>
