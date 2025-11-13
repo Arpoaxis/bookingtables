@@ -17,12 +17,11 @@ public class LoginDao {
 
             try (Connection connection = DriverManager.getConnection(url);
                  PreparedStatement ps = connection.prepareStatement(
-                     // Fixed SQL: correct table names, aliases and spacing
-                     "SELECT u.user_id, u.email, u.password, r.role_name " +
-                     "FROM users u " +
-                     "JOIN users_to_user_roles ur ON u.user_id = ur.user_id " +
-                     "JOIN user_roles r ON ur.role_id = r.role_id " +
-                     "WHERE u.email = ?"
+                		 "SELECT u.user_id, u.email, u.password, r.role_name " +
+                		 "FROM users u " +
+                		 "JOIN users_to_user_roles ur ON u.user_id = ur.user_id " +
+                		 "JOIN user_roles r ON ur.role_id = r.role_id " +
+                		 "WHERE u.email = ?"
                  )) {
 
                 ps.setString(1, email);
