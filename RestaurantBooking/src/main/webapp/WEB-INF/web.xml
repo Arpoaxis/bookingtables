@@ -5,25 +5,7 @@
 <welcome-file-list>
 		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>
-
-	<servlet>
-		<servlet-name>LoginServlet</servlet-name>
-		<servlet-class>com.restaurant.servlet.LoginServlet</servlet-class>
-	</servlet>
 	
-	<servlet>
-		<servlet-name>RegisterServlet</servlet-name>
-		<servlet-class>com.restaurant.servlet.RegisterServlet</servlet-class>
-	</servlet>
-	<servlet>
-		<servlet-name>LogoutServlet</servlet-name>
-		<servlet-class>com.restaurant.servlet.LogoutServlet</servlet-class>
-	</servlet>
-	<servlet>
-		<servlet-name>TestServlet</servlet-name>
-		<servlet-class>com.restaurant.servlet.TestServlet</servlet-class>
-	</servlet>
-
 	<listener>
 		<listener-class>com.restaurant.listeners.DatabaseInitializer</listener-class>
 	</listener>

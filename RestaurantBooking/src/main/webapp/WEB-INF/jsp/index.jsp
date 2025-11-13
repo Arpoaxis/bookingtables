@@ -5,27 +5,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Website Page</title>
+  <title>Restaurant Booking</title>
+  <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
 <body>
   <h1>Welcome to Restaurant Booking!</h1>
 
-  <!-- user is logged in if we have an email in session -->
   <c:choose>
-    <c:when test="${not empty sessionScope.email}">
-      <!-- Optional admin link for business accounts -->
-      <c:if test="${sessionScope.user != null and sessionScope.user.accountType == 'Business'}">
-        <c:url value="/admin/dashboard" var="adminUrl"/>
-        <a href="${adminUrl}">Administrator Dashboard</a>
-      </c:if>
+  <c:when test="${not empty sessionScope.email}">
+    	<c:if test="${sessionScope.role == 'MANAGER' || sessionScope.role == 'ADMIN'}">
+      		<a href="<c:url value='/admin/dashboard'/>">Administrator Dashboard</a>
+    	</c:if>
+    	<p>Welcome, ${sessionScope.email}!</p>
+    	<p><a href="<c:url value='/logout'/>">Logout</a></p>
+  	</c:when>
+  	<c:otherwise>
+   			<p>Please <a href="<c:url value='/login'/>">login</a> to continue.</p>
+  		</c:otherwise>
+	</c:choose>
 
-      <p>Welcome, ${sessionScope.email}!</p>
-      <p><a href="${pageContext.request.contextPath}/LogoutServlet">Logout</a></p>
-    </c:when>
-
-    <c:otherwise>
-      <p>Please <a href="${pageContext.request.contextPath}/jsp/Login/login_page.jsp">login</a> to continue.</p>
-    </c:otherwise>
-  </c:choose>
 </body>
 </html>
