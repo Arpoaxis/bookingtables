@@ -45,7 +45,7 @@
 		    	<p style="color:red;">${error}</p>
 			</c:if>
     	</form>
-    	<p>Already have an account then <a href="<%= request.getContextPath() %>/jsp/login/login_page.jsp">Login here</a></p>
+    	<p>Already have an account then <a href="<c:url value='/login'/>">Login</a></p>
     </div>
     </body>
    

@@ -186,20 +186,24 @@ public class DatabaseInitializer implements ServletContextListener {
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_waitlists_host ON waitlists(host_id);");
 
                     
+                 // 1) Roles first
                     stmt.executeUpdate("""
-                        INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active)
-                        VALUES (1, 'admin', 'Admin', 'User', 'admin@example.com', 'admin', '0000000000', 1);
-                    """);
-                    
-                    stmt.executeUpdate("""
-                        INSERT OR IGNORE INTO users_to_user_roles(user_id, role_id)
-                        SELECT 1, role_id FROM user_roles WHERE role_name='ADMIN';
+                      INSERT OR IGNORE INTO user_roles(role_name)
+                      VALUES('ADMIN'),('MANAGER'),('EMPLOYEE'),('HOST'),('CUSTOMER');
                     """);
 
+                    // 2) Admin user
                     stmt.executeUpdate("""
-                    		  INSERT OR IGNORE INTO user_roles(role_name)
-                    		  VALUES('ADMIN'),('MANAGER'),('EMPLOYEE'),('HOST'),('CUSTOMER');
-                    		""");
+                      INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active)
+                      VALUES (1, 'admin', 'Admin', 'User', 'admin@example.com', 'admin', '0000000000', 1);
+                    """);
+
+                    // 3) Link admin -> ADMIN role
+                    stmt.executeUpdate("""
+                      INSERT OR IGNORE INTO users_to_user_roles(user_id, role_id)
+                      SELECT 1, role_id FROM user_roles WHERE role_name='ADMIN';
+                    """);
+
                     
                     conn.commit();
                 } catch (Exception ex) {

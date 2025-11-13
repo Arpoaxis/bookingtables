@@ -9,8 +9,14 @@ import com.restaurant.model.User;
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException {
+      req.getRequestDispatcher("/WEB-INF/jsp/Login/login_page.jsp").forward(req, resp);
+    }
+    
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
     	request.getRequestDispatcher("/WEB-INF/jsp/login/login_page.jsp").forward(request, response);
     }
@@ -25,15 +31,17 @@ public class LoginServlet extends HttpServlet {
         
         if (user != null) {
 			// Create session and store user
-			HttpSession session = request.getSession();
-			session.setAttribute("user", user);
+        	HttpSession session = request.getSession();
+        	session.setAttribute("user", user);
+        	session.setAttribute("email", user.getEmail());       
+        	session.setAttribute("role", user.getAccountType());
 
-			// Redirect based on role
-			if ("ADMIN".equalsIgnoreCase(user.getAccountType())) {
-				response.sendRedirect(request.getContextPath() + "/jsp/admin/dashboard.jsp");
-			} else {
-				response.sendRedirect(request.getContextPath() + "/jsp/index.jsp");
-			}
+        	if ("ADMIN".equalsIgnoreCase(user.getAccountType()) || 
+        	    "MANAGER".equalsIgnoreCase(user.getAccountType())) {
+        	    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+        	} else {
+        	    response.sendRedirect(request.getContextPath() + "/");
+        	}
 			return;
 		}
         else {

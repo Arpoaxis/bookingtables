@@ -28,12 +28,14 @@
         <li><a href="${pageContext.request.contextPath}/jsp/admin/manage_users.jsp">Manage Tables</a></li>
       </ul>
 
-      <p><a href="${pageContext.request.contextPath}/logout">Logout</a></p>
+      <p><a href="<c:url value='/logout'/>">Logout</a></p>
+
     </c:if>
 
     <c:if test="${sessionScope.user == null or sessionScope.user.accountType != 'ADMIN'}">
-      <p style="color:red;">Access Denied: You must be logged in as an administrator to view this page.</p>
-      <p><a href="${pageContext.request.contextPath}/jsp/Login/login_page.jsp">Go to Login</a></p>
+      	<p style="color:red;">Access Denied: You must be logged in as an administrator to view this page.</p>
+		<a href="<c:url value='/login'/>">Login</a>
+
     </c:if>
   </div>
 </body>
