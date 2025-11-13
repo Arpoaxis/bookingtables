@@ -20,7 +20,7 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/WEB-INF/jsp/Login/register.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/jsp/login/register.jsp").forward(request, response);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class RegisterServlet extends HttpServlet {
             case "SUCCESS":
                 HttpSession session = request.getSession();
                 session.setAttribute("email", email);
-                response.sendRedirect(request.getContextPath() + "/jsp/Login/login_page.jsp");
+                response.sendRedirect(request.getContextPath() + "/jsp/login/login_page.jsp");
                 break;
 
             default:
@@ -94,6 +94,6 @@ public class RegisterServlet extends HttpServlet {
     private void sendError(HttpServletRequest request, HttpServletResponse response, String message)
             throws ServletException, IOException {
         request.setAttribute("error", message);
-        request.getRequestDispatcher("/WEB-INF/jsp/Login/register.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/jsp/login/register.jsp").forward(request, response);
     }
 }

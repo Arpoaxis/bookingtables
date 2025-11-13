@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Dashboard - Restaurant Booking</title>
-  <link rel="stylesheet" href="<%=request.getContextPath()%>/css/style.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 
 <body>
