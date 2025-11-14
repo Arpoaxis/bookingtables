@@ -29,10 +29,41 @@
            <p style="color:red;">${reportError}</p>
        </c:if>
    </div>
+         <!-- NEW: Bookings by Status -->
+      <h2>Bookings by Status</h2>
+
+      <table class="status-table">
+          <thead>
+              <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr>
+                  <td>Pending</td>
+                  <td>${statusCounts['PENDING']}</td>
+              </tr>
+              <tr>
+                  <td>Confirmed</td>
+                  <td>${statusCounts['CONFIRMED']}</td>
+              </tr>
+              <tr>
+                  <td>Seated</td>
+                  <td>${statusCounts['SEATED']}</td>
+              </tr>
+              <tr>
+                  <td>Cancelled</td>
+                  <td>${statusCounts['CANCELLED']}</td>
+              </tr>
+          </tbody>
+      </table>
+   
       <h2>Management Options</h2>
       <ul>
+      	<li><a href="<c:url value='/admin/table_planner'/>">Table Planner (suggest tables)</a></li>  
         <li><a href="${pageContext.request.contextPath}/jsp/admin/add_table.jsp">Add New Table</a></li>
-        <li><a href="${pageContext.request.contextPath}/jsp/admin/view_tables.jsp">View All Tables</a></li>
+        <li><a href="<c:url value='/admin/tables'/>">View All Tables</a></li>
         <li><a href="${pageContext.request.contextPath}/jsp/admin/manage_users.jsp">Manage Tables</a></li>
       </ul>
 
