@@ -20,7 +20,15 @@
     <c:if test="${sessionScope.user != null and sessionScope.user.accountType == 'ADMIN'}">
       <p>Welcome, ${sessionScope.user.email}</p>
       <hr>
+	  <div class="dashboard-summary">
+       <p><strong>Total bookings:</strong> ${totalBookings}</p>
+       <p><strong>Bookings today:</strong> ${bookingsToday}</p>
+       <p><strong>Distinct customers:</strong> ${distinctCustomers}</p>
 
+       <c:if test="${not empty reportError}">
+           <p style="color:red;">${reportError}</p>
+       </c:if>
+   </div>
       <h2>Management Options</h2>
       <ul>
         <li><a href="${pageContext.request.contextPath}/jsp/admin/add_table.jsp">Add New Table</a></li>
