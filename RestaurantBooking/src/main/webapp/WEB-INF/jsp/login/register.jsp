@@ -1,53 +1,44 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-
-
 <!DOCTYPE html>
 <html>
-
 <head>
+    <meta charset="UTF-8">
     <title>Register</title>
-   <link rel="stylesheet" type="text/css" href="<%=request.getContextPath()%>/css/style.css">
-    </head>
-    <body> 
-    <div class="home-link">
-	 <p><a href="<%=request.getContextPath()%>/jsp/index.jsp">Home</a></p></div>
-	 <div class="register-container">
-    	<h1>Register</h1>
-    	
-    	<form action="<%= request.getContextPath() %>/register" method="post">
-    		<Label for="email">Email:</Label>
-        	<input type="email" name="email" id="email" required>
-        	<br>
-        	
-            <!-- <c:if test="${accountType == 'personal'}">
-            <input type="hidden" name="account_type" value="personal" />
-            <p>Selected account type: <c:out value="${accountType}"/></p>-->
-        	
-        	<Label for="FirstName">First Name:</Label>
-        	<input type="text" name="FirstName" id="FirstName" required>
-        	<br>
-        	<Label for="LastName">Last Name:</Label>
-        	<input type="text" name="LastName" id="LastName" required>
-        	<br>
-        	<!-- </c:if>-->
-    		<Label for="PhoneNumber">Phone Number:</Label>
-    		<input type="text" name="PhoneNumber" id="PhoneNumber" required>
-    	    <br>
-    		<Label for="password">Password:</Label>
-    		<input type="password" name="password" id="password" required>
-    		<br>
-    		<Label for="confirmPassword">Confirm Password:</Label>
-    		<input type="password" name="confirmPassword" id="confirmPassword" required>
-    		<br>
-    		<input type="submit" value="Register">
-    		<c:if test="${not empty error}">
-		    	<p style="color:red;">${error}</p>
-			</c:if>
-    	</form>
-    	<p>Already have an account then <a href="<c:url value='/login'/>">Login</a></p>
-    </div>
-    </body>
-   
+    <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
+</head>
+<body>
+<h1>Register</h1>
 
+<c:if test="${not empty error}">
+    <p style="color:red;">${error}</p>
+</c:if>
+
+<form action="<c:url value='/register'/>" method="post">
+    <label for="firstName">First Name:</label>
+    <input type="text" id="firstName" name="firstName" required><br><br>
+
+    <label for="lastName">Last Name:</label>
+    <input type="text" id="lastName" name="lastName" required><br><br>
+
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required><br><br>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <label for="phoneNumber">Phone Number:</label>
+    <input type="tel" id="phoneNumber" name="phoneNumber" required><br><br>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <label for="confirmPassword">Confirm Password:</label>
+    <input type="password" id="confirmPassword" name="confirmPassword" required><br><br>
+
+    <button type="submit">Register</button>
+</form>
+
+<p>Already have an account? <a href="<c:url value='/login'/>">Login</a></p>
+</body>
 </html>
