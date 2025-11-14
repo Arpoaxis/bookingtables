@@ -16,11 +16,15 @@
     <h1>Table Planner</h1>
 
     <form action="<c:url value='/admin/table_planner'/>" method="post">
-        <label>Party size:</label>
-        <input type="number" name="partySize" min="1"
-               value="${partySize}" required />
-        <button type="submit">Suggest Tables</button>
-    </form>
+    	<!-- CSRF protection: name must be 'csrf_token' to match the filter -->
+    	<input type="hidden" name="csrf_token" value="${csrfToken}" />
+
+    	<label>Party size:</label>
+    	<input type="number" name="partySize" min="1"
+           value="${partySize}" required />
+    	<button type="submit">Suggest Tables</button>
+	</form>
+
 
     <c:if test="${not empty error}">
         <p style="color:red;">${error}</p>

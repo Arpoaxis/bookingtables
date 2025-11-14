@@ -28,6 +28,8 @@
             <form action="<c:url value='/admin/edit_table'/>" method="post">
                 <!-- Keep ID hidden -->
                 <input type="hidden" name="tableId" value="${table.tableId}" />
+                <input type="hidden" name="csrf_token" value="${csrfToken}" />
+                
 
                 <label>Table Number:</label>
                 <input type="number" name="tableNumber" value="${table.tableNumber}" required />
