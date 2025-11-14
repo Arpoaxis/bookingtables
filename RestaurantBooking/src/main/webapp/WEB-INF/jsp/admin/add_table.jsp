@@ -26,6 +26,8 @@
 	  </div>
 	<h2>Add New Table</h2>
     <form action="<%=request.getContextPath()%>/admin/add_table" method="post">
+    	<input type="hidden" name="csrf_token" value="${csrfToken}" />
+    	
         <label>Table Number:</label>
         <input type="number" name="tableNumber" required><br><br>
         

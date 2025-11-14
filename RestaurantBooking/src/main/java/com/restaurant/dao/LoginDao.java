@@ -1,12 +1,13 @@
-//login dao class
 package com.restaurant.dao;
-import com.restaurant.util.PasswordUtil;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import com.restaurant.model.User;
+import com.restaurant.util.PasswordUtil;
 
 public class LoginDao {
 
@@ -18,47 +19,41 @@ public class LoginDao {
 
             try (Connection connection = DriverManager.getConnection(url);
                  PreparedStatement ps = connection.prepareStatement(
-                		 "SELECT u.user_id, u.email, u.password, r.role_name " +
-                		 "FROM users u " +
-                		 "JOIN users_to_user_roles ur ON u.user_id = ur.user_id " +
-                		 "JOIN user_roles r ON ur.role_id = r.role_id " +
-                		 "WHERE u.email = ?"
+                     "SELECT u.user_id, u.email, u.password, r.role_name " +
+                     "FROM users u " +
+                     "JOIN users_to_user_roles ur ON u.user_id = ur.user_id " +
+                     "JOIN user_roles r ON ur.role_id = r.role_id " +
+                     "WHERE u.email = ?"
                  )) {
 
                 ps.setString(1, email);
 
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                    	String storedPassword = rs.getString("password");
+                        String storedPassword = rs.getString("password");
+                        String roleName = rs.getString("role_name");
 
-                    	boolean matched = false;
+                        boolean matches = false;
 
-                    	// 1) Try BCrypt (new style)
-                    	if (PasswordUtil.verifyPassword(password, storedPassword)) {
-                    	    matched = true;
-                    	} else if (storedPassword != null && storedPassword.equals(password)) {
-                    	    // 2) Backwards-compat: old plain-text match still works
-                    	    matched = true;
+                        if (storedPassword != null) {
+                            // If it looks like a BCrypt hash, use BCrypt
+                            if (storedPassword.startsWith("$2a$")
+                                    || storedPassword.startsWith("$2b$")
+                                    || storedPassword.startsWith("$2y$")) {
+                                matches = PasswordUtil.verifyPassword(password, storedPassword);
+                            } else {
+                                // Fallback: legacy plain-text comparison
+                                matches = storedPassword.equals(password);
+                            }
+                        }
 
-                    	    // Optional: upgrade this user to a hashed password now
-                    	    String newHash = PasswordUtil.hashPassword(password);
-                    	    try (PreparedStatement up = connection.prepareStatement(
-                    	            "UPDATE users SET password = ? WHERE user_id = ?")) {
-                    	        up.setString(1, newHash);
-                    	        up.setInt(2, rs.getInt("user_id"));
-                    	        up.executeUpdate();
-                    	    }
-                    	}
-
-                    	if (matched) {
-                    	    String accountType = rs.getString("role_name");
-
-                    	    user = new User();
-                    	    user.setEmail(email);
-                    	    // Don’t keep raw password in memory anymore:
-                    	    user.setPassword(null);
-                    	    user.setAccountType(accountType);
-                    	}
+                        if (matches) {
+                            user = new User();
+                            user.setEmail(email);
+                            // we won't keep the password in session later
+                            user.setPassword(null);
+                            user.setAccountType(roleName);
+                        }
                     }
                 }
             }

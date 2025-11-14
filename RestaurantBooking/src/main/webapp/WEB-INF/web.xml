@@ -32,5 +32,28 @@
 	    <url-pattern>/register</url-pattern>
 	    <url-pattern>/logout</url-pattern>
   </filter-mapping>
+	<session-config>
+    	<session-timeout>30</session-timeout>
+
+    	<!-- cookie settings first -->
+    	<cookie-config>
+        	<http-only>true</http-only>
+        	<!-- secure=true for HTTPS; false is OK for local http:// dev -->
+        	<secure>false</secure>
+    	</cookie-config>
+
+    	<!-- then tracking mode -->
+    	<tracking-mode>COOKIE</tracking-mode>
+	</session-config>
+	<filter>
+    	<filter-name>CSRFFilter</filter-name>
+    	<filter-class>com.restaurant.filter.CSRFFilter</filter-class>
+	</filter>
+	<filter-mapping>
+    	<filter-name>CSRFFilter</filter-name>
+    	<url-pattern>/admin/*</url-pattern>
+	</filter-mapping>
+	
+  
 
 </web-app>

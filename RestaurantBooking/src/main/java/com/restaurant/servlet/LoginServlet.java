@@ -26,20 +26,32 @@ public class LoginServlet extends HttpServlet {
         User user = LoginDao.validate(email, password, dbpath);
         
         if (user != null) {
-			// Create session and store user
-        	HttpSession session = request.getSession();
-        	session.setAttribute("user", user);
-        	session.setAttribute("email", user.getEmail());       
-        	session.setAttribute("role", user.getAccountType());
 
-        	if ("ADMIN".equalsIgnoreCase(user.getAccountType()) || 
-        	    "MANAGER".equalsIgnoreCase(user.getAccountType())) {
-        	    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-        	} else {
-        	    response.sendRedirect(request.getContextPath() + "/");
-        	}
-			return;
-		}
+            // Extra safety: make sure password isn't stored in session
+            user.setPassword(null);
+
+            // Session fixation protection:
+            // 1) kill any old session
+            HttpSession oldSession = request.getSession(false);
+            if (oldSession != null) {
+                oldSession.invalidate();
+            }
+            // 2) create a brand-new session
+            HttpSession session = request.getSession(true);
+
+            session.setAttribute("user", user);
+            session.setAttribute("email", user.getEmail());
+            session.setAttribute("role", user.getAccountType());
+
+            if ("ADMIN".equalsIgnoreCase(user.getAccountType())
+                    || "MANAGER".equalsIgnoreCase(user.getAccountType())) {
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/");
+            }
+            return;
+        }
+
         else {
         	request.setAttribute("error", "Invalid email or password.");
         	request.getRequestDispatcher("/WEB-INF/jsp/login/login_page.jsp").forward(request, response);
