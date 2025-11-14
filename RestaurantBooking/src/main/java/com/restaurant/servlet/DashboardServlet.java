@@ -10,6 +10,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.util.Map;
+import java.util.LinkedHashMap;
+
+
 import com.restaurant.util.DatabaseUtility;
 
 @WebServlet("/admin/dashboard")
@@ -20,14 +24,12 @@ public class DashboardServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // 1) Simple access check: only logged-in users can see this
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("user") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
 
-        // 2) Ask the database for some summary numbers
         try (Connection conn = DatabaseUtility.getConnection(getServletContext())) {
 
             long totalBookings = runCount(conn,
@@ -41,19 +43,22 @@ public class DashboardServlet extends HttpServlet {
                     "SELECT COUNT(DISTINCT user_id) " +
                     "FROM bookings " +
                     "WHERE user_id IS NOT NULL");
+            
+            Map<String, Long> statusCounts = loadStatusCounts(conn);
 
-            // 3) Store results in the request so the JSP can use them
+
             req.setAttribute("totalBookings", totalBookings);
             req.setAttribute("bookingsToday", bookingsToday);
             req.setAttribute("distinctCustomers", distinctCustomers);
+            req.setAttribute("statusCounts", statusCounts);
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // In case of error, we set a message the JSP can show
+
             req.setAttribute("reportError", "Unable to load dashboard statistics.");
         }
 
-        // 4) Forward to the JSP (view)
+
         req.getRequestDispatcher("/WEB-INF/jsp/admin/dashboard.jsp")
            .forward(req, resp);
     }
@@ -67,4 +72,46 @@ public class DashboardServlet extends HttpServlet {
             return rs.next() ? rs.getLong(1) : 0L;
         }
     }
+    /**
+     * Load counts of bookings grouped by status.
+     * Ensures we always return all four known statuses,
+     * even if some are zero.
+     */
+    private Map<String, Long> loadStatusCounts(Connection conn) throws SQLException {
+        String sql = """
+            SELECT booking_status, COUNT(*) 
+            FROM bookings
+            GROUP BY booking_status
+        """;
+
+        Map<String, Long> result = new LinkedHashMap<>();
+
+        // Initialize with 0 so JSP doesn't have to worry if a status is missing
+        result.put("PENDING",   0L);
+        result.put("CONFIRMED", 0L);
+        result.put("SEATED",    0L);
+        result.put("CANCELLED", 0L);
+
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                String status = rs.getString(1);
+                long count = rs.getLong(2);
+
+                if (status != null) {
+                    status = status.toUpperCase();
+                    if (result.containsKey(status)) {
+                        result.put(status, count);
+                    } else {
+                        // In case a new status appears in the future
+                        result.put(status, count);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
 }
