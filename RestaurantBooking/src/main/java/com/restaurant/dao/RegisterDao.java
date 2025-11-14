@@ -1,27 +1,25 @@
-//register data access object class
 package com.restaurant.dao;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement; 
-public class RegisterDao {
-	public static String register(String email, String password, String account_type,
-            long phone_number, String first_name, String last_name, String dbpath) {
 
-        
+import java.sql.*;
+import com.restaurant.util.PasswordUtil;
+
+public class RegisterDao {
+
+    public static String register(String username, String email, String password, String account_type,
+                                  long phone_number, String first_name, String last_name, String dbpath) {
+
         Connection connection = null;
 
         try {
-        	Class.forName("org.sqlite.JDBC");
+            Class.forName("org.sqlite.JDBC");
             String url = "jdbc:sqlite:" + dbpath;
             connection = DriverManager.getConnection(url);
             connection.setAutoCommit(false);
 
-            //Check if email already exists
-            try (PreparedStatement ps = connection.prepareStatement("SELECT 1 FROM users WHERE email = ?")) {
-                ps.setString(1, email);
+            // Check if email already exists
+            try (PreparedStatement ps = connection.prepareStatement(
+                    "SELECT 1 FROM users WHERE email = ?")) {
+                ps.setString(1, email.toLowerCase());
                 try (ResultSet result = ps.executeQuery()) {
                     if (result.next()) {
                         return "EMAIL_EXIST";
@@ -29,17 +27,24 @@ public class RegisterDao {
                 }
             }
 
+            // Hash password before storing
+            String hashedPassword = PasswordUtil.hashPassword(password);
 
-            //Insert new user
+            // Insert new user (note: includes username now)
             int userId = -1;
-            String insert_user = "INSERT INTO users (first_name, last_name, email, password, phone_number) VALUES (?, ?, ?, ?, ?)";
+            String insert_user =
+                    "INSERT INTO users (username, first_name, last_name, email, password, phone_number) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
 
-            try (PreparedStatement ps = connection.prepareStatement(insert_user, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setString(1, first_name);
-                ps.setString(2, last_name);
-                ps.setString(3, email);
-                ps.setString(4, password);
-                ps.setLong(5, phone_number);
+            try (PreparedStatement ps = connection.prepareStatement(
+                    insert_user, Statement.RETURN_GENERATED_KEYS)) {
+
+                ps.setString(1, username);
+                ps.setString(2, first_name);
+                ps.setString(3, last_name);
+                ps.setString(4, email.toLowerCase());
+                ps.setString(5, hashedPassword);
+                ps.setLong(6, phone_number);
 
                 int rowsAffected = ps.executeUpdate();
                 if (rowsAffected == 0) {
@@ -57,7 +62,7 @@ public class RegisterDao {
                 }
             }
 
-            //Get role id
+            // Get role id
             int role_id = -1;
             String get_role_id = "SELECT role_id FROM user_roles WHERE role_name = ?";
             try (PreparedStatement ps = connection.prepareStatement(get_role_id)) {
@@ -71,8 +76,9 @@ public class RegisterDao {
                     }
                 }
             }
-            //Assign role to user
-            String link_role="INSERT INTO users_to_user_roles(user_id, role_id) VALUES (?, ?)";
+
+            // Assign role to user
+            String link_role = "INSERT INTO users_to_user_roles(user_id, role_id) VALUES (?, ?)";
             try (PreparedStatement ps = connection.prepareStatement(link_role)) {
                 ps.setInt(1, userId);
                 ps.setInt(2, role_id);
@@ -83,8 +89,6 @@ public class RegisterDao {
                 }
             }
 
-
-            //Commit
             connection.commit();
             return "SUCCESS";
 
@@ -101,11 +105,7 @@ public class RegisterDao {
 
         } finally {
             if (connection != null) {
-				try {
-					connection.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+                try { connection.close(); } catch (SQLException e) { e.printStackTrace(); }
             }
         }
     }

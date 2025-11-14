@@ -1,5 +1,6 @@
 //login dao class
 package com.restaurant.dao;
+import com.restaurant.util.PasswordUtil;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -28,18 +29,36 @@ public class LoginDao {
 
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        String storedPassword = rs.getString("password");
+                    	String storedPassword = rs.getString("password");
 
-                        // Compare with entered password (stored passwords are plain text in DB for this example)
-                        if (storedPassword != null && storedPassword.equals(password)) {
-                            String accountType = rs.getString("role_name");
+                    	boolean matched = false;
 
-                            // Create user object and populate it
-                            user = new User();
-                            user.setEmail(email);
-                            user.setPassword(password);
-                            user.setAccountType(accountType);
-                        }
+                    	// 1) Try BCrypt (new style)
+                    	if (PasswordUtil.verifyPassword(password, storedPassword)) {
+                    	    matched = true;
+                    	} else if (storedPassword != null && storedPassword.equals(password)) {
+                    	    // 2) Backwards-compat: old plain-text match still works
+                    	    matched = true;
+
+                    	    // Optional: upgrade this user to a hashed password now
+                    	    String newHash = PasswordUtil.hashPassword(password);
+                    	    try (PreparedStatement up = connection.prepareStatement(
+                    	            "UPDATE users SET password = ? WHERE user_id = ?")) {
+                    	        up.setString(1, newHash);
+                    	        up.setInt(2, rs.getInt("user_id"));
+                    	        up.executeUpdate();
+                    	    }
+                    	}
+
+                    	if (matched) {
+                    	    String accountType = rs.getString("role_name");
+
+                    	    user = new User();
+                    	    user.setEmail(email);
+                    	    // Don’t keep raw password in memory anymore:
+                    	    user.setPassword(null);
+                    	    user.setAccountType(accountType);
+                    	}
                     }
                 }
             }

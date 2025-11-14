@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import com.restaurant.dao.RegisterDao;
+import com.restaurant.util.PasswordUtil;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -27,33 +28,40 @@ public class RegisterServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        //Get form parameters
-        String email = request.getParameter("email");
-        String password = request.getParameter("password");
-        String confirmPassword = request.getParameter("confirmPassword");
-        //String accountType = request.getParameter("account_type");
-        String accountType="Customer";
-        String phone = request.getParameter("PhoneNumber");
-        String firstName = request.getParameter("FirstName");
-        String lastName = request.getParameter("LastName");
+        // Get form parameters
+        String firstName   = request.getParameter("firstName");
+        String lastName    = request.getParameter("lastName");
+        String username    = request.getParameter("username");
+        String email       = request.getParameter("email");
+        String phone       = request.getParameter("phoneNumber");
+        String password    = request.getParameter("password");
+        String confirmPass = request.getParameter("confirmPassword");
+        String accountType = "CUSTOMER"; // for now, fixed
 
         String dbPath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
 
-        //Validate account type
-        if (accountType == null || accountType.isEmpty()) {
-            sendError(request, response, "Please select an account type.");
+        // Basic required-field check
+        if (isBlank(firstName) || isBlank(lastName) || isBlank(username) ||
+            isBlank(email) || isBlank(phone) || isBlank(password) || isBlank(confirmPass)) {
+            sendError(request, response, "All fields are required.");
             return;
         }
 
-        //Check password match
-        if (password == null || !password.equals(confirmPassword)) {
+        // Check password match
+        if (!password.equals(confirmPass)) {
             sendError(request, response, "Passwords do not match.");
             return;
         }
 
-        //Validate email format
+        // Check password strength
+        if (!PasswordUtil.isPasswordStrong(password)) {
+            sendError(request, response, PasswordUtil.getPasswordRequirements());
+            return;
+        }
+
+        // Validate email format
         String regexPattern = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
-                + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$";
+                            + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$";
         Pattern pattern = Pattern.compile(regexPattern);
         Matcher matcher = pattern.matcher(email);
         if (!matcher.matches()) {
@@ -61,7 +69,7 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        //Validate phone number
+        // Validate phone number
         long phoneNumber;
         try {
             phoneNumber = Long.parseLong(phone);
@@ -70,27 +78,29 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        //Call DAO to handle registration
-        String status = RegisterDao.register(email, password, accountType, phoneNumber, firstName, lastName, dbPath);
+        // Call DAO to handle registration
+        String status = RegisterDao.register(
+                username, email, password, accountType,
+                phoneNumber, firstName, lastName, dbPath);
 
         switch (status) {
             case "EMAIL_EXIST":
                 sendError(request, response, "Email already exists.");
                 break;
-
             case "SUCCESS":
                 HttpSession session = request.getSession();
                 session.setAttribute("email", email);
-                response.sendRedirect(request.getContextPath() + "/jsp/login/login_page.jsp");
+                response.sendRedirect(request.getContextPath() + "/login");
                 break;
-
             default:
                 sendError(request, response, "Registration failed. Please try again.");
-                break;
         }
     }
 
-    //forward error message
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
     private void sendError(HttpServletRequest request, HttpServletResponse response, String message)
             throws ServletException, IOException {
         request.setAttribute("error", message);
