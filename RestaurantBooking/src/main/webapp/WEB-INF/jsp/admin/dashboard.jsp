@@ -59,13 +59,11 @@
           </tbody>
       </table>
    
-      <h2>Management Options</h2>
-      <ul>
-      	<li><a href="<c:url value='/admin/table_planner'/>">Table Planner (suggest tables)</a></li>  
-        <li><a href="${pageContext.request.contextPath}/jsp/admin/add_table.jsp">Add New Table</a></li>
-        <li><a href="<c:url value='/admin/tables'/>">View All Tables</a></li>
-        <li><a href="${pageContext.request.contextPath}/jsp/admin/manage_users.jsp">Manage Tables</a></li>
-      </ul>
+      	<h2>Management Options</h2>
+		<ul>
+   		 	<li><a href="<c:url value='/admin/manage_tables'/>">Manage Tables</a></li>
+		</ul>
+
 
       <p><a href="<c:url value='/logout'/>">Logout</a></p>
 
