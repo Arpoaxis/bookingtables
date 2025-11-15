@@ -16,13 +16,13 @@ public class LoginDao {
             String url = "jdbc:sqlite:" + dbPath;
 
             try (Connection connection = DriverManager.getConnection(url);
-                 PreparedStatement ps = connection.prepareStatement(
-                		 "SELECT u.user_id, u.email, u.password, r.role_name " +
-                		 "FROM users u " +
-                		 "JOIN users_to_user_roles ur ON u.user_id = ur.user_id " +
-                		 "JOIN user_roles r ON ur.role_id = r.role_id " +
-                		 "WHERE u.email = ?"
-                 )) {
+            		PreparedStatement ps = connection.prepareStatement(
+            			    "SELECT u.user_id, u.email, u.password, u.first_name, u.last_name, r.role_name " +
+            			    "FROM users u " +
+            			    "JOIN users_to_user_roles ur ON u.user_id = ur.user_id " +
+            			    "JOIN user_roles r ON ur.role_id = r.role_id " +
+            			    "WHERE u.email = ?"
+            			);) {
 
                 ps.setString(1, email);
 
@@ -34,11 +34,13 @@ public class LoginDao {
                         if (storedPassword != null && storedPassword.equals(password)) {
                             String accountType = rs.getString("role_name");
 
-                            // Create user object and populate it
                             user = new User();
-                            user.setEmail(email);
+                            user.setEmail(rs.getString("email"));
                             user.setPassword(password);
                             user.setAccountType(accountType);
+                            user.setAccountType(rs.getString("role_name"));
+                            user.setFirstName(rs.getString("first_name")); 
+                            user.setLastName(rs.getString("last_name"));
                         }
                     }
                 }

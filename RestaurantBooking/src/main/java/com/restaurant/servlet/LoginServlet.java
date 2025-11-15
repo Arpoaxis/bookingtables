@@ -32,7 +32,7 @@ public class LoginServlet extends HttpServlet {
 			if ("ADMIN".equalsIgnoreCase(user.getAccountType())) {
 				response.sendRedirect(request.getContextPath() + "/jsp/admin/dashboard.jsp");
 			} else {
-				response.sendRedirect(request.getContextPath() + "/jsp/index.jsp");
+				 response.sendRedirect(request.getContextPath() + "/jsp/index.jsp");
 			}
 			return;
 		}

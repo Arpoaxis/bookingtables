@@ -8,20 +8,25 @@
   <title>Website Page</title>
 </head>
 <body>
-  <h1>Welcome to Restaurant Booking!</h1>
+  <h1>Restaurant Booking</h1>
 
   <!-- user is logged in if we have an email in session -->
   <c:choose>
-    <c:when test="${sessionScope.email != null}">
-      <p>Welcome, ${sessionScope.email}!</p>
-      <c:if test="$sessionScope.user.accountType == 'Admin'}">
-      	<a href="${pageContext.request.contextPath}/jsp/Admin/admin_dashboard.jsp">Administrator Dashboard</a>
+<c:when test="${sessionScope.user != null}">
+
+      <p>Welcome, ${sessionScope.user.firstName}!</p>
+
+      <!-- Admin Dashboard Link -->
+      <c:if test="${sessionScope.user.accountType == 'ADMIN'}">
+          <a href="${pageContext.request.contextPath}/jsp/admin/dashboard.jsp">Administrator Dashboard</a>
       </c:if>
-	  <c:if test="$sessionScope.user.accountType != 'ADMIN'}">
-      	<p><a href="${pageContext.request.contextPath}/jsp/index.jsp">Homepage</a></p>
+
+      <!-- Customer Homepage Link -->
+      <c:if test="${sessionScope.user.accountType == 'CUSTOMER'}">
+          <a href="${pageContext.request.contextPath}/jsp/index.jsp">Homepage</a>
       </c:if>
-      
-      <p><a href="${pageContext.request.contextPath}/logout ">Logout</a></p>
+
+      <p><a href="${pageContext.request.contextPath}/logout">Logout</a></p>
     </c:when>
 
     <c:otherwise>
