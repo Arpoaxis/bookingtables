@@ -411,4 +411,113 @@ body {
         grid-template-columns: 1fr;
     }
 }
+/* ===== Floor Plan Layout (visual room) ===== */
 
+.floorplan-main {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px 40px;
+}
+
+.floorplan-subtitle {
+    margin-top: 4px;
+    margin-bottom: 20px;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.floorplan-room {
+    background: #fdfdfd;
+    border-radius: 12px;
+    padding: 20px 24px 16px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    border: 1px solid #ddd;
+}
+
+/* each row represents a physical row of tables */
+.floor-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.floor-row-label {
+    width: 140px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+.floor-row-tables {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* aisle between rows */
+.floor-aisle {
+    margin: 10px 0 18px;
+    padding: 6px 0;
+    border-top: 2px dashed #bbb;
+    border-bottom: 2px dashed #bbb;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #777;
+}
+
+/* circular “tables” */
+.table-node {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.table-node-number {
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+/* capacity-based color cues */
+.table-cap-2 {
+    border-color: #4a7ae5;
+}
+
+.table-cap-4 {
+    border-color: #28a745;
+}
+
+.table-cap-big {
+    border-color: #d9534f;
+}
+
+/* back wall label */
+.floor-back-wall {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 3px solid #555;
+    font-size: 0.8rem;
+    text-align: right;
+    color: #555;
+}
+
+/* small screen tweak */
+@media (max-width: 800px) {
+    .floor-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .floor-row-label {
+        margin-bottom: 6px;
+    }
+}

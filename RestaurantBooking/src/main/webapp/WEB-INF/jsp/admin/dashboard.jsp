@@ -79,6 +79,11 @@
                             Manage tables
                         </a>
                     </li>
+                    <li>
+        				<a href="<c:url value='/admin/floor_plan'/>">
+            				View floor plan (beta)
+        				</a>
+    				</li>
                 </ul>
 
                 <hr class="management-separator"/>
