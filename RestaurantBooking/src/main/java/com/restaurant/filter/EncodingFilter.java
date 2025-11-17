@@ -2,7 +2,6 @@ package com.restaurant.filter;
 
 import java.io.IOException;
 import jakarta.servlet.*;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class EncodingFilter implements Filter {
@@ -37,4 +36,4 @@ public class EncodingFilter implements Filter {
 
     @Override
     public void destroy() { /* no-op */ }
-}
+} 

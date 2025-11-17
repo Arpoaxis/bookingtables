@@ -20,20 +20,59 @@
     <c:if test="${sessionScope.user != null and sessionScope.user.accountType == 'ADMIN'}">
       <p>Welcome, ${sessionScope.user.email}</p>
       <hr>
+	  <div class="dashboard-summary">
+       <p><strong>Total bookings:</strong> ${totalBookings}</p>
+       <p><strong>Bookings today:</strong> ${bookingsToday}</p>
+       <p><strong>Distinct customers:</strong> ${distinctCustomers}</p>
 
-      <h2>Management Options</h2>
-      <ul>
-        <li><a href="${pageContext.request.contextPath}/jsp/admin/add_table.jsp">Add New Table</a></li>
-        <li><a href="${pageContext.request.contextPath}/jsp/admin/view_tables.jsp">View All Tables</a></li>
-        <li><a href="${pageContext.request.contextPath}/jsp/admin/manage_users.jsp">Manage Tables</a></li>
-      </ul>
+       <c:if test="${not empty reportError}">
+           <p style="color:red;">${reportError}</p>
+       </c:if>
+   </div>
+         <!-- NEW: Bookings by Status -->
+      <h2>Bookings by Status</h2>
 
-      <p><a href="${pageContext.request.contextPath}/logout">Logout</a></p>
+      <table class="status-table">
+          <thead>
+              <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr>
+                  <td>Pending</td>
+                  <td>${statusCounts['PENDING']}</td>
+              </tr>
+              <tr>
+                  <td>Confirmed</td>
+                  <td>${statusCounts['CONFIRMED']}</td>
+              </tr>
+              <tr>
+                  <td>Seated</td>
+                  <td>${statusCounts['SEATED']}</td>
+              </tr>
+              <tr>
+                  <td>Cancelled</td>
+                  <td>${statusCounts['CANCELLED']}</td>
+              </tr>
+          </tbody>
+      </table>
+   
+      	<h2>Management Options</h2>
+		<ul>
+   		 	<li><a href="<c:url value='/admin/manage_tables'/>">Manage Tables</a></li>
+		</ul>
+
+
+      <p><a href="<c:url value='/logout'/>">Logout</a></p>
+
     </c:if>
 
     <c:if test="${sessionScope.user == null or sessionScope.user.accountType != 'ADMIN'}">
-      <p style="color:red;">Access Denied: You must be logged in as an administrator to view this page.</p>
-      <p><a href="${pageContext.request.contextPath}/jsp/Login/login_page.jsp">Go to Login</a></p>
+      	<p style="color:red;">Access Denied: You must be logged in as an administrator to view this page.</p>
+		<a href="<c:url value='/login'/>">Login</a>
+
     </c:if>
   </div>
 </body>

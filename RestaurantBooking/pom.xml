@@ -13,8 +13,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
     </properties>
 
@@ -51,6 +49,12 @@
 		    <artifactId>jakarta.servlet.jsp-api</artifactId>
 		    <version>3.0.0</version>
 		    <scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+    		<groupId>org.mindrot</groupId>
+    		<artifactId>jbcrypt</artifactId>
+    		<version>0.4</version>
 		</dependency>
 
     </dependencies>

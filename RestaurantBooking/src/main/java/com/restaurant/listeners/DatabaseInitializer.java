@@ -50,6 +50,28 @@ public class DatabaseInitializer implements ServletContextListener {
 
                 conn.setAutoCommit(false);
                 try {
+                	stmt.executeUpdate("""
+                            CREATE TABLE IF NOT EXISTS restaurants (
+                                restaurant_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                name TEXT NOT NULL,
+                                address TEXT,
+                                phone TEXT,
+                                description TEXT,
+                                opening_time TEXT DEFAULT '10:00',
+                                closing_time TEXT DEFAULT '22:00',
+                                created TEXT NOT NULL DEFAULT(datetime('now'))
+                            );
+                        """);
+
+                        // Add default restaurants
+                        stmt.executeUpdate("""
+                            INSERT OR IGNORE INTO restaurants
+                            (restaurant_id, name, address, phone, description)
+                            VALUES
+                              (1, 'Central Grill',  '100 Main St', '(555) 000-1111', 'Modern American cuisine'),
+                              (2, 'Sushi Palace',   '200 Ocean Ave', '(555) 222-3333', 'Fresh sushi & sashimi'),
+                              (3, 'Pasta Corner',   '300 Olive Rd',  '(555) 444-5555', 'Cozy Italian dining');
+                        """);
                     
                     stmt.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS users (
@@ -71,6 +93,7 @@ public class DatabaseInitializer implements ServletContextListener {
                             role_name TEXT NOT NULL UNIQUE
                         );
                     """);
+                  
 
                     stmt.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS users_to_user_roles (
@@ -83,6 +106,8 @@ public class DatabaseInitializer implements ServletContextListener {
                                 ON DELETE CASCADE ON UPDATE NO ACTION
                         );
                     """);
+                    
+
 
                     stmt.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS permissions (
@@ -104,28 +129,34 @@ public class DatabaseInitializer implements ServletContextListener {
                     """);
 
                     stmt.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS bookings (
-                            booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            user_id INTEGER,
-                            number_of_guests INTEGER NOT NULL CHECK(number_of_guests >= 1),
-                            booking_date TEXT NOT NULL,
-                            booking_time TEXT NOT NULL,
-                            special_requests TEXT,
-                            booking_status TEXT NOT NULL DEFAULT 'PENDING'
-                                CHECK(booking_status IN ('PENDING','CONFIRMED','SEATED','CANCELLED')),
-                            created TEXT NOT NULL DEFAULT (datetime('now')),
-                            FOREIGN KEY(user_id) REFERENCES users(user_id)
-                                ON DELETE CASCADE ON UPDATE NO ACTION
-                        );
-                    """);
+                            CREATE TABLE IF NOT EXISTS bookings (
+                                booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                user_id INTEGER,
+                                restaurant_id INTEGER NOT NULL,
+                                number_of_guests INTEGER NOT NULL CHECK(number_of_guests >= 1),
+                                booking_date TEXT NOT NULL,
+                                booking_time TEXT NOT NULL,
+                                special_requests TEXT,
+                                booking_status TEXT NOT NULL DEFAULT 'PENDING'
+                                    CHECK(booking_status IN ('PENDING','CONFIRMED','SEATED','CANCELLED')),
+                                created TEXT NOT NULL DEFAULT (datetime('now')),
+                                FOREIGN KEY(user_id) REFERENCES users(user_id)
+                                    ON DELETE CASCADE ON UPDATE NO ACTION,
+                                FOREIGN KEY(restaurant_id) REFERENCES restaurants(restaurant_id)
+                                    ON DELETE CASCADE ON UPDATE NO ACTION
+                            );
+                        """);
 
                     stmt.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS restaurant_tables (
                             table_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            restaurant_id INTEGER NOT NULL, 
                             table_number  INTEGER NOT NULL UNIQUE,
                             min_capacity  INTEGER NOT NULL CHECK(min_capacity >= 1),
                             max_capacity  INTEGER NOT NULL CHECK(max_capacity >= min_capacity),
-                            can_combine   INTEGER NOT NULL CHECK(can_combine IN (0,1))
+                            can_combine   INTEGER NOT NULL CHECK(can_combine IN (0,1)),
+                            FOREIGN KEY(restaurant_id) REFERENCES restaurants(restaurant_id)
+								ON DELETE CASCADE ON UPDATE NO ACTION
                         );
                     """);
 
@@ -142,27 +173,27 @@ public class DatabaseInitializer implements ServletContextListener {
                     """);
 
                     stmt.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS waitlists (
-                            waitlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            user_id INTEGER,
-                            customer_name TEXT,
-                            customer_phone_number TEXT,
-                            party_size INTEGER NOT NULL CHECK(party_size >= 1),
-                            queue_position INTEGER,
-                            status TEXT NOT NULL DEFAULT 'WAITING'
-                                CHECK(status IN ('WAITING','NOTIFIED','SEATED','CANCELLED')),
-                            estimated_wait_time TEXT,
-                            arrived_at TEXT,
-                            seated_at TEXT,
-                            host_id INTEGER,
-                            special_requests TEXT,
-                            created TEXT NOT NULL DEFAULT (datetime('now')),
-                            FOREIGN KEY(user_id) REFERENCES users(user_id)
-                                ON DELETE CASCADE ON UPDATE NO ACTION,
-                            FOREIGN KEY(host_id) REFERENCES users(user_id)
-                                ON DELETE CASCADE ON UPDATE NO ACTION
-                        );
-                    """);
+                            CREATE TABLE IF NOT EXISTS waitlists (
+                                waitlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                restaurant_id INTEGER NOT NULL,
+                                user_id INTEGER,
+                                customer_name TEXT,
+                                customer_phone_number TEXT,
+                                party_size INTEGER NOT NULL CHECK(party_size >= 1),
+                                queue_position INTEGER,
+                                status TEXT NOT NULL DEFAULT 'WAITING'
+                                    CHECK(status IN ('WAITING','NOTIFIED','SEATED','CANCELLED')),
+                                estimated_wait_time TEXT,
+                                arrived_at TEXT,
+                                seated_at TEXT,
+                                host_id INTEGER,
+                                special_requests TEXT,
+                                created TEXT NOT NULL DEFAULT(datetime('now')),
+                                FOREIGN KEY(restaurant_id) REFERENCES restaurants(restaurant_id),
+                                FOREIGN KEY(user_id) REFERENCES users(user_id),
+                                FOREIGN KEY(host_id) REFERENCES users(user_id)
+                            );
+                        """);
 
                     stmt.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS waitlist_tables (
@@ -175,6 +206,7 @@ public class DatabaseInitializer implements ServletContextListener {
                                 ON DELETE CASCADE ON UPDATE NO ACTION
                         );
                     """);
+                    
 
                     
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_users_email  ON users(email);");
@@ -184,22 +216,30 @@ public class DatabaseInitializer implements ServletContextListener {
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_booking_tables_table   ON booking_tables(table_id);");
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_waitlists_user ON waitlists(user_id);");
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_waitlists_host ON waitlists(host_id);");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_restaurant_tables_restaurant ON restaurant_tables(restaurant_id);");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_bookings_restaurant ON bookings(restaurant_id);");
 
                     
-                    stmt.executeUpdate("""
-                        INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active)
-                        VALUES (1, 'admin', 'Admin', 'User', 'admin@example.com', 'admin', '0000000000', 1);
-                    """);
                     
+                 // 1) Roles first
                     stmt.executeUpdate("""
-                        INSERT OR IGNORE INTO users_to_user_roles(user_id, role_id)
-                        SELECT 1, role_id FROM user_roles WHERE role_name='ADMIN';
+                      INSERT OR IGNORE INTO user_roles(role_name)
+                      VALUES('ADMIN'),('MANAGER'),('EMPLOYEE'),('HOST'),('CUSTOMER');
                     """);
 
+                    // 2) Admin user
                     stmt.executeUpdate("""
-                    		  INSERT OR IGNORE INTO user_roles(role_name)
-                    		  VALUES('ADMIN'),('MANAGER'),('EMPLOYEE'),('HOST'),('CUSTOMER');
-                    		""");
+                      INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active)
+                      VALUES (1, 'admin', 'Admin', 'User', 'admin@example.com', 'admin', '0000000000', 1);
+                    """);
+
+                    // 3) Link admin -> ADMIN role
+                    stmt.executeUpdate("""
+                      INSERT OR IGNORE INTO users_to_user_roles(user_id, role_id)
+                      SELECT 1, role_id FROM user_roles WHERE role_name='ADMIN';
+                    """);
+                    
+
                     
                     conn.commit();
                 } catch (Exception ex) {
@@ -343,28 +383,47 @@ public class DatabaseInitializer implements ServletContextListener {
    
     private void loadRestaurantTables(ServletContext ctx, String resourcePath, String url) throws Exception {
         try (var in = ctx.getResourceAsStream(resourcePath)) {
-            if (in == null) { System.out.println("No CSV: " + resourcePath); return; }
+            if (in == null) { 
+                System.out.println("No CSV: " + resourcePath); 
+                return; 
+            }
+
             try (var br = new java.io.BufferedReader(new java.io.InputStreamReader(in));
                  var conn = java.sql.DriverManager.getConnection(url)) {
+
                 conn.setAutoCommit(false);
-                String line; boolean header = false;
+                String line; 
+                boolean header = false;
+
                 String sql = """
-                    INSERT OR IGNORE INTO restaurant_tables(table_number, min_capacity, max_capacity, can_combine)
-                    VALUES (?,?,?,?)
+                    INSERT OR IGNORE INTO restaurant_tables
+                    (restaurant_id, table_number, min_capacity, max_capacity, can_combine)
+                    VALUES (?,?,?,?,?)
                 """;
+
                 try (var ps = conn.prepareStatement(sql)) {
                     while ((line = br.readLine()) != null) {
+
                         if (!header) { header = true; continue; }
+
                         String[] p = line.split(",", -1);
-                        if (p.length < 4) continue;
-                        ps.setInt(1, Integer.parseInt(p[0].trim())); // table_number
-                        ps.setInt(2, Integer.parseInt(p[1].trim())); // min_capacity
-                        ps.setInt(3, Integer.parseInt(p[2].trim())); // max_capacity
-                        ps.setInt(4, Integer.parseInt(p[3].trim())); // can_combine 0/1
+                        if (p.length < 5) {
+                            System.out.println("Invalid restaurant_tables CSV row: " + line);
+                            continue;
+                        }
+
+                        ps.setInt(1, Integer.parseInt(p[0].trim())); // restaurant_id
+                        ps.setInt(2, Integer.parseInt(p[1].trim())); // table_number
+                        ps.setInt(3, Integer.parseInt(p[2].trim())); // min_capacity
+                        ps.setInt(4, Integer.parseInt(p[3].trim())); // max_capacity
+                        ps.setInt(5, Integer.parseInt(p[4].trim())); // can_combine 0/1
+
                         ps.addBatch();
                     }
+
                     ps.executeBatch();
                 }
+
                 conn.commit();
             }
         }
@@ -381,9 +440,10 @@ public class DatabaseInitializer implements ServletContextListener {
                 String findUser = "SELECT user_id FROM users WHERE email=?";
                 String findTable = "SELECT table_id FROM restaurant_tables WHERE table_number=?";
                 String insertBooking = """
-                    INSERT INTO bookings(user_id, number_of_guests, booking_date, booking_time, special_requests, booking_status, created)
-                    VALUES (?,?,?,?,?,?,?)
-                """;
+                	    INSERT INTO bookings(user_id, restaurant_id, number_of_guests, booking_date, booking_time,
+                	                         special_requests, booking_status, created)
+                	    VALUES (?,?,?,?,?,?,?,?)
+                	""";
                 String insertLink = "INSERT OR IGNORE INTO booking_tables(booking_id, table_id) VALUES(?,?)";
                 String lastId = "SELECT last_insert_rowid()";
 
@@ -397,16 +457,17 @@ public class DatabaseInitializer implements ServletContextListener {
                     while ((line = br.readLine()) != null) {
                         if (!header) { header = true; continue; }
                         String[] p = line.split(",", -1);
-                        if (p.length < 8) continue;
+                        if (p.length < 9) continue;
 
                         String email = p[0].trim().toLowerCase();
-                        int guests = Integer.parseInt(p[1].trim());
-                        String bDate = p[2].trim();
-                        String bTime = p[3].trim();
-                        String req   = p[4].trim();
-                        String status= p[5].trim();
-                        String created = p[6].trim();
-                        int tableNumber = Integer.parseInt(p[7].trim());
+                        int restaurantId = Integer.parseInt(p[1].trim());
+                        int guests = Integer.parseInt(p[2].trim());
+                        String bDate = p[3].trim();
+                        String bTime = p[4].trim();
+                        String req   = p[5].trim();
+                        String status= p[6].trim();
+                        String created = p[7].trim();
+                        int tableNumber = Integer.parseInt(p[8].trim());
 
                         // user_id
                         Integer userId = null;
@@ -421,12 +482,13 @@ public class DatabaseInitializer implements ServletContextListener {
 
                         // booking
                         psInsB.setInt(1, userId);
-                        psInsB.setInt(2, guests);
-                        psInsB.setString(3, bDate);
-                        psInsB.setString(4, bTime);
-                        psInsB.setString(5, req);
-                        psInsB.setString(6, status);
-                        psInsB.setString(7, created);
+                        psInsB.setInt(2, restaurantId);
+                        psInsB.setInt(3, guests);
+                        psInsB.setString(4, bDate);
+                        psInsB.setString(5, bTime);
+                        psInsB.setString(6, req);
+                        psInsB.setString(7, status);
+                        psInsB.setString(8, created);
                         psInsB.executeUpdate();
 
                         // fetch booking_id and link
@@ -446,28 +508,52 @@ public class DatabaseInitializer implements ServletContextListener {
 
     private void loadWaitlists(ServletContext ctx, String resourcePath, String url) throws Exception {
         try (var in = ctx.getResourceAsStream(resourcePath)) {
-            if (in == null) { System.out.println("No CSV: " + resourcePath); return; }
+            if (in == null) {
+                System.out.println("No CSV: " + resourcePath);
+                return;
+            }
             try (var br = new java.io.BufferedReader(new java.io.InputStreamReader(in));
                  var conn = java.sql.DriverManager.getConnection(url)) {
 
-                try (var s = conn.createStatement()) { s.execute("PRAGMA foreign_keys = ON;"); }
+                try (var s = conn.createStatement()) {
+                    s.execute("PRAGMA foreign_keys = ON;");
+                }
                 conn.setAutoCommit(false);
 
                 String findUser = "SELECT user_id FROM users WHERE email=?";
                 String insertWL = """
-                    INSERT INTO waitlists(user_id, customer_name, customer_phone_number, party_size, queue_position, status,
-                                          estimated_wait_time, arrived_at, seated_at, host_id, special_requests, created)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                    INSERT INTO waitlists(
+                        restaurant_id,
+                        user_id,
+                        customer_name,
+                        customer_phone_number,
+                        party_size,
+                        queue_position,
+                        status,
+                        estimated_wait_time,
+                        arrived_at,
+                        seated_at,
+                        host_id,
+                        special_requests,
+                        created
+                    )
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """;
 
                 try (var psFind = conn.prepareStatement(findUser);
-                     var psIns = conn.prepareStatement(insertWL)) {
+                     var psIns  = conn.prepareStatement(insertWL)) {
 
-                    String line; boolean header=false;
+                    String line;
+                    boolean header = false;
+
                     while ((line = br.readLine()) != null) {
                         if (!header) { header = true; continue; }
+
                         String[] p = line.split(",", -1);
-                        if (p.length < 12) continue;
+                        if (p.length < 12) {
+                            System.out.println("Invalid waitlists CSV row: " + line);
+                            continue;
+                        }
 
                         String custEmail = p[0].trim().toLowerCase();
                         String custName  = p[1].trim();
@@ -486,25 +572,38 @@ public class DatabaseInitializer implements ServletContextListener {
                         Integer userId = null, hostId = null;
                         if (!custEmail.isEmpty()) {
                             psFind.setString(1, custEmail);
-                            try (var rs = psFind.executeQuery()) { if (rs.next()) userId = rs.getInt(1); }
+                            try (var rs = psFind.executeQuery()) {
+                                if (rs.next()) userId = rs.getInt(1);
+                            }
                         }
                         if (!hostEmail.isEmpty()) {
                             psFind.setString(1, hostEmail);
-                            try (var rs = psFind.executeQuery()) { if (rs.next()) hostId = rs.getInt(1); }
+                            try (var rs = psFind.executeQuery()) {
+                                if (rs.next()) hostId = rs.getInt(1);
+                            }
                         }
 
-                        psIns.setObject(1, userId);
-                        psIns.setString(2, custName);
-                        psIns.setString(3, custPhone);
-                        psIns.setInt(4, party);
-                        if (queuePos == null) psIns.setNull(5, java.sql.Types.INTEGER); else psIns.setInt(5, queuePos);
-                        psIns.setString(6, status);
-                        psIns.setString(7, estWait);
-                        psIns.setString(8, arrivedAt);
-                        if (seatedAt.isEmpty()) psIns.setNull(9, java.sql.Types.VARCHAR); else psIns.setString(9, seatedAt);
-                        if (hostId == null) psIns.setNull(10, java.sql.Types.INTEGER); else psIns.setInt(10, hostId);
-                        psIns.setString(11, requests);
-                        psIns.setString(12, created);
+                        int restaurantId = 1; // seed all waitlists to restaurant #1
+
+                        int idx = 1;
+                        psIns.setInt(idx++, restaurantId);              // restaurant_id
+                        if (userId == null) psIns.setNull(idx++, java.sql.Types.INTEGER);
+                        else                psIns.setInt(idx++, userId); // user_id
+                        psIns.setString(idx++, custName);               // customer_name
+                        psIns.setString(idx++, custPhone);              // customer_phone_number
+                        psIns.setInt(idx++, party);                     // party_size
+                        if (queuePos == null) psIns.setNull(idx++, java.sql.Types.INTEGER);
+                        else                  psIns.setInt(idx++, queuePos); // queue_position
+                        psIns.setString(idx++, status);                 // status
+                        psIns.setString(idx++, estWait);                // estimated_wait_time
+                        psIns.setString(idx++, arrivedAt);              // arrived_at
+                        if (seatedAt.isEmpty()) psIns.setNull(idx++, java.sql.Types.VARCHAR);
+                        else                    psIns.setString(idx++, seatedAt); // seated_at
+                        if (hostId == null) psIns.setNull(idx++, java.sql.Types.INTEGER);
+                        else                psIns.setInt(idx++, hostId); // host_id
+                        psIns.setString(idx++, requests);               // special_requests
+                        psIns.setString(idx++, created);                // created
+
                         psIns.executeUpdate();
                     }
                 }
@@ -512,6 +611,7 @@ public class DatabaseInitializer implements ServletContextListener {
             }
         }
     }
+
 
     private void loadWaitlistTableLinks(ServletContext ctx, String resourcePath, String url) throws Exception {
         try (var in = ctx.getResourceAsStream(resourcePath)) {

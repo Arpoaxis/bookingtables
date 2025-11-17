@@ -1,54 +1,74 @@
-//login dao class
 package com.restaurant.dao;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import com.restaurant.model.User;
+import com.restaurant.util.PasswordUtil;
 
 public class LoginDao {
 
     public static User validate(String email, String password, String dbPath) {
         User user = null;
+
         try {
             Class.forName("org.sqlite.JDBC");
             String url = "jdbc:sqlite:" + dbPath;
 
+            String sql = """
+                SELECT u.user_id, u.email, u.password, u.first_name, u.last_name,
+                       COALESCE(r.role_name, 'CUSTOMER') AS role_name
+                FROM users u
+                LEFT JOIN users_to_user_roles ur ON u.user_id = ur.user_id
+                LEFT JOIN user_roles r ON ur.role_id = r.role_id
+                WHERE LOWER(u.email) = LOWER(?)
+            """;
+
             try (Connection connection = DriverManager.getConnection(url);
-            		PreparedStatement ps = connection.prepareStatement(
-            			    "SELECT u.user_id, u.email, u.password, u.first_name, u.last_name, r.role_name " +
-            			    "FROM users u " +
-            			    "JOIN users_to_user_roles ur ON u.user_id = ur.user_id " +
-            			    "JOIN user_roles r ON ur.role_id = r.role_id " +
-            			    "WHERE u.email = ?"
-            			);) {
+                 PreparedStatement ps = connection.prepareStatement(sql)) {
 
                 ps.setString(1, email);
 
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         String storedPassword = rs.getString("password");
+                        String roleName = rs.getString("role_name");
 
-                        // Compare with entered password (stored passwords are plain text in DB for this example)
-                        if (storedPassword != null && storedPassword.equals(password)) {
-                            String accountType = rs.getString("role_name");
+                        boolean matches = false;
 
+                        if (storedPassword != null) {
+                            // If it looks like a BCrypt hash, use BCrypt
+                            if (storedPassword.startsWith("$2a$") ||
+                                storedPassword.startsWith("$2b$") ||
+                                storedPassword.startsWith("$2y$")) {
+
+                                matches = PasswordUtil.verifyPassword(password, storedPassword);
+                            } else {
+                                // Legacy plain text match
+                                matches = storedPassword.equals(password);
+                            }
+                        }
+
+                        if (matches) {
                             user = new User();
+                            user.setUserId(rs.getInt("user_id"));
                             user.setEmail(rs.getString("email"));
-                            user.setPassword(password);
-                            user.setAccountType(accountType);
-                            user.setAccountType(rs.getString("role_name"));
-                            user.setFirstName(rs.getString("first_name")); 
+                            user.setFirstName(rs.getString("first_name"));
                             user.setLastName(rs.getString("last_name"));
+                            user.setPassword(null);
+                            user.setAccountType(roleName != null ? roleName : "CUSTOMER");
                         }
                     }
                 }
             }
+
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
 
-        return user; // null means invalid credentials
+        return user; // null  means invalid credentials
     }
 }

@@ -1,11 +1,8 @@
 /*style.css*/
 body{
-    background-color:lightgray;
-    display: flex;
-    justify-content: center; /*horizontal alignment*/
-    align-items: center; /*vertical alignment*/
-    height: 100vh; /*full viewport height*/
-    margin: 0; /*remove default margin*/
+    background-color:lightgrey;
+    margin: 0;
+    font-family: Arial, sans-serif;
 }
 .home-link{
 	position: absolute;
@@ -39,4 +36,28 @@ body{
 	color:black;
 	font-weight:bold; 
 	font-size:12px;
+}
+.restaurant-container {
+    max-width: 800px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.restaurant-container h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.restaurant-container p {
+    font-size: 18px;
+    margin: 5px 0;
+}
+
+.restaurant-container a {
+    font-weight: bold;
+}
+.td{
+	padding:10px;
 }

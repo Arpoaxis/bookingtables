@@ -13,8 +13,8 @@ public class ForwardingServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Extract the requested path after /jsp/
-        String path = request.getPathInfo(); // e.g. /login/login_page.jsp
+        //Extract the requested path after /jsp/
+        String path = request.getPathInfo(); 
 
         if (path == null || path.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);

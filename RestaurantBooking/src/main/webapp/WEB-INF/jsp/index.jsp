@@ -3,35 +3,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Website Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Booking</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
-  <h1>Restaurant Booking</h1>
+	
+    <jsp:include page="/WEB-INF/jsp/header.jsp"/>
+    <h1>Restaurant Booking</h1>
 
-  <!-- user is logged in if we have an email in session -->
-  <c:choose>
-<c:when test="${sessionScope.user != null}">
+    <%-- USER LOGIN / ROLE LOGIC START --%>
+    <c:choose>
 
-      <p>Welcome, ${sessionScope.user.firstName}!</p>
+        <c:when test="${not empty sessionScope.user}">
+            <%-- LOGGED IN USER AREA --%>
 
-      <!-- Admin Dashboard Link -->
-      <c:if test="${sessionScope.user.accountType == 'ADMIN'}">
-          <a href="${pageContext.request.contextPath}/jsp/admin/dashboard.jsp">Administrator Dashboard</a>
-      </c:if>
+            <p>
+                Welcome,
+                <c:out value="${sessionScope.user.firstName}" />
+                (<c:out value="${sessionScope.user.email}" />)
+            </p>
 
-      <!-- Customer Homepage Link -->
-      <c:if test="${sessionScope.user.accountType == 'CUSTOMER'}">
-          <a href="${pageContext.request.contextPath}/jsp/index.jsp">Homepage</a>
-      </c:if>
+            <c:if test="${sessionScope.role == 'ADMIN' || sessionScope.role == 'MANAGER'}">
+                <a href="<c:url value='/admin/dashboard'/>">Administrator Dashboard</a>
+            </c:if>
 
-      <p><a href="${pageContext.request.contextPath}/logout">Logout</a></p>
-    </c:when>
+            <c:if test="${sessionScope.role == 'CUSTOMER'}">
+                <a href="<c:url value='/'/>">Home</a>
+            </c:if>
 
-    <c:otherwise>
-      <p>Please <a href="${pageContext.request.contextPath}/login">login</a> to continue.</p>
-    </c:otherwise>
-  </c:choose>
+            <p><a href="<c:url value='/logout'/>">Logout</a></p>
+        </c:when>
+
+        <c:otherwise>
+            <%-- NOT LOGGED IN MESSAGE --%>
+            <p>Please <a href="<c:url value='/login'/>">login</a> to continue.</p>
+        </c:otherwise>
+
+    </c:choose>
+    <%-- USER LOGIN / ROLE LOGIC END --%>
+
+
+    <%-- RESTAURANT LIST --%>
+    <div class="restaurant-list-container">
+        <h2>Choose a Restaurant</h2>
+
+        <c:if test="${not empty error}">
+            <p style="color:red;">${error}</p>
+        </c:if>
+
+        <c:if test="${empty restaurants}">
+            <p>No restaurants found.</p>
+        </c:if>
+
+        <div class="restaurant-grid">
+
+            <c:forEach var="r" items="${restaurants}">
+                <div class="restaurant-card">
+
+                 <%-- Do not have images yet 
+                 <img src="<c:url value='/images/restaurant_default.jpg' />"
+				     alt="Restaurant image"
+				     class="restaurant-img"--%>
+
+
+                    <div class="restaurant-info">
+                        <h3>${r.name}</h3>
+                        <p class="address">${r.address}</p>
+                        <p class="desc">${r.description}</p>
+
+                        <a class="view-btn"
+                           href="<c:url value='/restaurant?id=${r.restaurantId}'/>">
+
+                            View Restaurant
+                        </a>
+                    </div>
+
+                </div>
+            </c:forEach>
+
+        </div>
+    </div>
+
 </body>
 </html>

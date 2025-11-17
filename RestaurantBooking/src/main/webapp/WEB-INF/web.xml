@@ -3,35 +3,17 @@
 			xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
 	<display-name>RestaurantBooking</display-name>
 	
-<welcome-file-list>
-		<welcome-file>index.jsp</welcome-file>
-	</welcome-file-list>
-
-	<servlet>
-		<servlet-name>LoginServlet</servlet-name>
-		<servlet-class>com.restaurant.servlet.LoginServlet</servlet-class>
-	</servlet>
+	<welcome-file-list>
+    <welcome-file>index</welcome-file>
+</welcome-file-list>
 	
-	<servlet>
-		<servlet-name>RegisterServlet</servlet-name>
-		<servlet-class>com.restaurant.servlet.RegisterServlet</servlet-class>
-	</servlet>
-	<servlet>
-		<servlet-name>LogoutServlet</servlet-name>
-		<servlet-class>com.restaurant.servlet.LogoutServlet</servlet-class>
-	</servlet>
-	<servlet>
-		<servlet-name>TestServlet</servlet-name>
-		<servlet-class>com.restaurant.servlet.TestServlet</servlet-class>
-	</servlet>
-
 	<listener>
 		<listener-class>com.restaurant.listeners.DatabaseInitializer</listener-class>
 	</listener>
 	
 	<context-param>
   		<param-name>resetDatabaseOnStartup</param-name>
-  		<param-value>true</param-value>
+  		<param-value>false</param-value>
 	</context-param>
 	<filter>
   		<filter-name>EncodingFilter</filter-name>
@@ -50,5 +32,28 @@
 	    <url-pattern>/register</url-pattern>
 	    <url-pattern>/logout</url-pattern>
   </filter-mapping>
+	<session-config>
+    	<session-timeout>30</session-timeout>
+
+    	<!-- cookie settings first -->
+    	<cookie-config>
+        	<http-only>true</http-only>
+        	<!-- secure=true for HTTPS; false is OK for local http:// dev -->
+        	<secure>false</secure>
+    	</cookie-config>
+
+    	<!-- then tracking mode -->
+    	<tracking-mode>COOKIE</tracking-mode>
+	</session-config>
+	<filter>
+    	<filter-name>CSRFFilter</filter-name>
+    	<filter-class>com.restaurant.filter.CSRFFilter</filter-class>
+	</filter>
+	<filter-mapping>
+    	<filter-name>CSRFFilter</filter-name>
+    	<url-pattern>/admin/*</url-pattern>
+	</filter-mapping>
+	
+  
 
 </web-app>
