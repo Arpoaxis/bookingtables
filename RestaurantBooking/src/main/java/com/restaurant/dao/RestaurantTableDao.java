@@ -53,7 +53,24 @@ public class RestaurantTableDao {
         }
     }
 
-    // Load a single table by ID
+    public boolean deleteTable(int tableId) {
+        String url = "jdbc:sqlite:" + dbPath;
+
+        String sql = "DELETE FROM restaurant_tables WHERE table_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(url);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, tableId);
+            int rows = ps.executeUpdate();
+            return rows > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public RestaurantTable getTableById(int tableId) {
         String sql = """
             SELECT table_id, table_number, min_capacity, max_capacity, can_combine
@@ -90,7 +107,6 @@ public class RestaurantTableDao {
         return null; // not found or error
     }
 
-    // Update table info
     public boolean updateTable(RestaurantTable table) {
         String sql = """
             UPDATE restaurant_tables
@@ -145,5 +161,27 @@ public class RestaurantTableDao {
         }
         return result;
     }
+    
+    public boolean reinsertTable(RestaurantTable t) {
+        String sql = """
+            INSERT INTO restaurant_tables (table_number, min_capacity, max_capacity, can_combine)
+            VALUES (?, ?, ?, ?)
+        """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, t.getTableNumber());
+            ps.setInt(2, t.getMinCapacity());
+            ps.setInt(3, t.getMaxCapacity());
+            ps.setInt(4, t.isCanCombine() ? 1 : 0);
+
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 
 }

@@ -1,5 +1,6 @@
 package com.restaurant.servlet;
 
+import com.restaurant.util.CSRFUtil;
 import com.restaurant.dao.RestaurantTableDao;
 import com.restaurant.model.RestaurantTable;
 import jakarta.servlet.ServletException;
@@ -19,27 +20,32 @@ public class ManageTablesServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // 1) Find the DB file in WEB-INF
         String dbPath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
 
         try {
-            // 2) Use your DAO to load all tables
             RestaurantTableDao dao = new RestaurantTableDao(dbPath);
             List<RestaurantTable> tables = dao.getAllTables();
 
-            // 3) Put the list on the request
             req.setAttribute("tables", tables);
+            
 
-            // 4) Forward to the JSP view (under WEB-INF)
-            req.getRequestDispatcher("/WEB-INF/jsp/admin/manage_tables.jsp")
-               .forward(req, resp);
+            String msg = req.getParameter("msg");
+            if (msg != null && !msg.isBlank()) {
+                req.setAttribute("message", msg);
+            }
+            
+            
 
         } catch (Exception e) {
             e.printStackTrace();
-            // Simple error handling for now
             req.setAttribute("error", "Failed to load tables: " + e.getMessage());
+            String csrfToken = CSRFUtil.getOrCreateToken(req);
+            req.setAttribute("csrfToken", csrfToken);
             req.getRequestDispatcher("/WEB-INF/jsp/admin/manage_tables.jsp")
                .forward(req, resp);
         }
+        CSRFUtil.getOrCreateToken(req);
+        req.getRequestDispatcher("/WEB-INF/jsp/admin/manage_tables.jsp")
+           .forward(req, resp);
     }
 }

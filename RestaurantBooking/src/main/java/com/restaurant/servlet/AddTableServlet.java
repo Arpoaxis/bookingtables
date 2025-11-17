@@ -15,6 +15,14 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet("/admin/add_table")
 public class AddTableServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Just show the JSP form
+        request.getRequestDispatcher("/WEB-INF/jsp/admin/add_table.jsp")
+               .forward(request, response);
+    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
