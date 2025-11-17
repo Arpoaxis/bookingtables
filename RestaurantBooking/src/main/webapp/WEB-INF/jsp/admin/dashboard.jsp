@@ -61,8 +61,9 @@
    
       	<h2>Management Options</h2>
 		<ul>
-   		 	<li><a href="<c:url value='/admin/manage_tables'/>">Manage Tables</a></li>
+    		<li><a href="<c:url value='/admin/manage_tables'/>">Manage Tables</a></li>
 		</ul>
+
 
 
       <p><a href="<c:url value='/logout'/>">Logout</a></p>
