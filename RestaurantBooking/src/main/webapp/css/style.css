@@ -1,4 +1,6 @@
 /*style.css*/
+body{
+    background-color:lightgrey;
 /* Global defaults for all pages */
 body {
     background-color: lightgray;
@@ -38,6 +40,30 @@ body {
 	color:black;
 	font-weight:bold; 
 	font-size:12px;
+}
+.restaurant-container {
+    max-width: 800px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.restaurant-container h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.restaurant-container p {
+    font-size: 18px;
+    margin: 5px 0;
+}
+
+.restaurant-container a {
+    font-weight: bold;
+}
+.td{
+	padding:10px;
 }
 
 /* --- Flash messages --- */

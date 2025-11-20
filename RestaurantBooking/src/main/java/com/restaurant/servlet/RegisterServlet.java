@@ -36,24 +36,24 @@ public class RegisterServlet extends HttpServlet {
         String phone       = request.getParameter("phoneNumber");
         String password    = request.getParameter("password");
         String confirmPass = request.getParameter("confirmPassword");
-        String accountType = "CUSTOMER"; // for now, fixed
+        String accountType = "CUSTOMER"; // default role
 
         String dbPath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
 
-        // Basic required-field check
+        // Check required fields
         if (isBlank(firstName) || isBlank(lastName) || isBlank(username) ||
             isBlank(email) || isBlank(phone) || isBlank(password) || isBlank(confirmPass)) {
             sendError(request, response, "All fields are required.");
             return;
         }
 
-        // Check password match
+        // Password match check
         if (!password.equals(confirmPass)) {
             sendError(request, response, "Passwords do not match.");
             return;
         }
 
-        // Check password strength
+        // Password strength
         if (!PasswordUtil.isPasswordStrong(password)) {
             sendError(request, response, PasswordUtil.getPasswordRequirements());
             return;
@@ -78,7 +78,7 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        // Call DAO to handle registration
+        // Attempt registration
         String status = RegisterDao.register(
                 username, email, password, accountType,
                 phoneNumber, firstName, lastName, dbPath);
@@ -87,11 +87,13 @@ public class RegisterServlet extends HttpServlet {
             case "EMAIL_EXIST":
                 sendError(request, response, "Email already exists.");
                 break;
+
             case "SUCCESS":
                 HttpSession session = request.getSession();
                 session.setAttribute("email", email);
                 response.sendRedirect(request.getContextPath() + "/login");
                 break;
+
             default:
                 sendError(request, response, "Registration failed. Please try again.");
         }

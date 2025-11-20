@@ -26,6 +26,38 @@
     <!-- Main grid: left = metrics + status, right = management -->
     <div class="dashboard-grid">
 
+      <table class="status-table">
+          <thead>
+              <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr>
+                  <td>Pending</td>
+                  <td>${statusCounts['PENDING']}</td>
+              </tr>
+              <tr>
+                  <td>Confirmed</td>
+                  <td>${statusCounts['CONFIRMED']}</td>
+              </tr>
+              <tr>
+                  <td>Seated</td>
+                  <td>${statusCounts['SEATED']}</td>
+              </tr>
+              <tr>
+                  <td>Cancelled</td>
+                  <td>${statusCounts['CANCELLED']}</td>
+              </tr>
+          </tbody>
+      </table>
+   
+      	<h2>Management Options</h2>
+		<ul>
+   		 	<li><a href="<c:url value='/admin/manage_tables'/>">Manage Tables</a></li>
+		</ul>
+
         <!-- LEFT COLUMN -->
         <div>
 

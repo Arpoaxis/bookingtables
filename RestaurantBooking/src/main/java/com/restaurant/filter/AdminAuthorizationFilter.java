@@ -41,7 +41,7 @@ public class AdminAuthorizationFilter implements Filter {
 
         // User is not authorized - redirect to login page
         httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        httpResponse.sendRedirect(httpRequest.getContextPath() + "/jsp/Login/login_page.jsp?error=unauthorized");
+        httpResponse.sendRedirect(httpRequest.getContextPath() + "/jsp/login/login_page.jsp?error=unauthorized");
     }
 
     @Override

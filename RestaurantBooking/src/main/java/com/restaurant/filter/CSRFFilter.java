@@ -10,7 +10,6 @@ import com.restaurant.util.CSRFUtil;
 /**
  * Filter to protect against CSRF attacks on POST, PUT, DELETE requests
  */
-@WebFilter(urlPatterns = {"/*"})
 public class CSRFFilter implements Filter {
 
     @Override
@@ -25,13 +24,36 @@ public class CSRFFilter implements Filter {
 
         HttpServletRequest httpRequest  = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
+        
+        String path   = httpRequest.getRequestURI();
+        String method = httpRequest.getMethod();
+        String ctx    = httpRequest.getContextPath();
+        
+        if (path.startsWith(ctx + "/images/")
+        	     || path.startsWith(ctx + "/css/")
+        	     || path.startsWith(ctx + "/js/")
+        	     || path.endsWith(".jpg")
+        	     || path.endsWith(".jpeg")
+        	     || path.endsWith(".png")
+        	     || path.endsWith(".gif")
+        	     || path.endsWith(".css")
+        	     || path.endsWith(".js")) {
 
+        	        chain.doFilter(request, response);
+        	        return;
+        	    }
+        if (!path.startsWith(httpRequest.getContextPath() + "/admin")) {
+            chain.doFilter(request, response);
+            return;
+        }
+        
+        
         // 1) Always ensure there is a CSRF token in the session
         //    and make it available to JSPs as "csrfToken"
         String csrfToken = CSRFUtil.getOrCreateToken(httpRequest);
         httpRequest.setAttribute("csrfToken", csrfToken);
 
-        String method = httpRequest.getMethod();
+       
 
         // 2) Only validate CSRF token for state-changing operations
         if ("POST".equalsIgnoreCase(method) ||
@@ -39,7 +61,6 @@ public class CSRFFilter implements Filter {
             "DELETE".equalsIgnoreCase(method)) {
 
             // Skip CSRF validation for login and register endpoints
-            String path = httpRequest.getRequestURI();
             if (path.endsWith("/login") || path.endsWith("/register")) {
                 chain.doFilter(request, response);
                 return;

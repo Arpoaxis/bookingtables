@@ -13,18 +13,22 @@ public class LoginDao {
 
     public static User validate(String email, String password, String dbPath) {
         User user = null;
+
         try {
             Class.forName("org.sqlite.JDBC");
             String url = "jdbc:sqlite:" + dbPath;
 
+            String sql = """
+                SELECT u.user_id, u.email, u.password, u.first_name, u.last_name,
+                       COALESCE(r.role_name, 'CUSTOMER') AS role_name
+                FROM users u
+                LEFT JOIN users_to_user_roles ur ON u.user_id = ur.user_id
+                LEFT JOIN user_roles r ON ur.role_id = r.role_id
+                WHERE LOWER(u.email) = LOWER(?)
+            """;
+
             try (Connection connection = DriverManager.getConnection(url);
-                 PreparedStatement ps = connection.prepareStatement(
-                     "SELECT u.user_id, u.email, u.password, r.role_name " +
-                     "FROM users u " +
-                     "JOIN users_to_user_roles ur ON u.user_id = ur.user_id " +
-                     "JOIN user_roles r ON ur.role_id = r.role_id " +
-                     "WHERE u.email = ?"
-                 )) {
+                 PreparedStatement ps = connection.prepareStatement(sql)) {
 
                 ps.setString(1, email);
 
@@ -37,30 +41,34 @@ public class LoginDao {
 
                         if (storedPassword != null) {
                             // If it looks like a BCrypt hash, use BCrypt
-                            if (storedPassword.startsWith("$2a$")
-                                    || storedPassword.startsWith("$2b$")
-                                    || storedPassword.startsWith("$2y$")) {
+                            if (storedPassword.startsWith("$2a$") ||
+                                storedPassword.startsWith("$2b$") ||
+                                storedPassword.startsWith("$2y$")) {
+
                                 matches = PasswordUtil.verifyPassword(password, storedPassword);
                             } else {
-                                // Fallback: legacy plain-text comparison
+                                // Legacy plain text match
                                 matches = storedPassword.equals(password);
                             }
                         }
 
                         if (matches) {
                             user = new User();
-                            user.setEmail(email);
-                            // we won't keep the password in session later
+                            user.setUserId(rs.getInt("user_id"));
+                            user.setEmail(rs.getString("email"));
+                            user.setFirstName(rs.getString("first_name"));
+                            user.setLastName(rs.getString("last_name"));
                             user.setPassword(null);
-                            user.setAccountType(roleName);
+                            user.setAccountType(roleName != null ? roleName : "CUSTOMER");
                         }
                     }
                 }
             }
+
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
 
-        return user; // null means invalid credentials
+        return user; // null  means invalid credentials
     }
 }
