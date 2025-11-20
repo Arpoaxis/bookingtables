@@ -3,34 +3,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Dashboard - Restaurant Booking</title>
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <meta charset="UTF-8">
+    <title>Administrator Dashboard</title>
+    <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
+<body class="dashboard-body">
 
-<body>
-  <div class="home-link">
-  
-    <jsp:include page="/WEB-INF/jsp/header.jsp"/>
-  </div>
+<div class="home-link">
+    <jsp:include page="/WEB-INF/jsp/header.jsp" />
+</div>
 
-  <div class="dashboard-container">
-    <h1>Administrator Dashboard</h1>
+<div class="dashboard-main">
 
-    <c:if test="${sessionScope.user != null and sessionScope.user.accountType == 'ADMIN'}">
-      <p>Welcome, ${sessionScope.user.email}</p>
-      <hr>
-	  <div class="dashboard-summary">
-       <p><strong>Total bookings:</strong> ${totalBookings}</p>
-       <p><strong>Bookings today:</strong> ${bookingsToday}</p>
-       <p><strong>Distinct customers:</strong> ${distinctCustomers}</p>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1>Administrator Dashboard</h1>
+        <p class="dashboard-subtitle">
+            Welcome, <strong>${sessionScope.email}</strong>
+        </p>
+    </div>
 
-       <c:if test="${not empty reportError}">
-           <p style="color:red;">${reportError}</p>
-       </c:if>
-   </div>
-         <!-- NEW: Bookings by Status -->
-      <h2>Bookings by Status</h2>
+    <!-- Main grid: left = metrics + status, right = management -->
+    <div class="dashboard-grid">
 
       <table class="status-table">
           <thead>
@@ -64,16 +58,76 @@
    		 	<li><a href="<c:url value='/admin/manage_tables'/>">Manage Tables</a></li>
 		</ul>
 
+        <!-- LEFT COLUMN -->
+        <div>
 
-      <p><a href="<c:url value='/logout'/>">Logout</a></p>
+            <!-- Summary metrics row -->
+            <div class="dashboard-card dashboard-cards-row">
+                <div class="metric-card">
+                    <p class="metric-label">Total bookings</p>
+                    <p class="metric-number">${totalBookings}</p>
+                </div>
+                <div class="metric-card">
+                    <p class="metric-label">Bookings today</p>
+                    <p class="metric-number">${bookingsToday}</p>
+                </div>
+                <div class="metric-card">
+                    <p class="metric-label">Distinct customers</p>
+                    <p class="metric-number">${distinctCustomers}</p>
+                </div>
+            </div>
 
-    </c:if>
+            <!-- Bookings by status -->
+            <div class="dashboard-card wide-card">
+                <h2>Bookings by status</h2>
+                <table class="status-table">
+                    <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <c:forEach var="entry" items="${statusCounts}">
+                        <tr>
+                            <td>${entry.key}</td>
+                            <td>${entry.value}</td>
+                        </tr>
+                    </c:forEach>
+                    </tbody>
+                </table>
+            </div>
 
-    <c:if test="${sessionScope.user == null or sessionScope.user.accountType != 'ADMIN'}">
-      	<p style="color:red;">Access Denied: You must be logged in as an administrator to view this page.</p>
-		<a href="<c:url value='/login'/>">Login</a>
+        </div>
 
-    </c:if>
-  </div>
+        <!-- RIGHT COLUMN: MANAGEMENT -->
+        <div>
+            <div class="dashboard-card management-card">
+                <h2>Management</h2>
+                <ul class="management-list">
+                    <li>
+                        <a class="primary-link"
+                           href="<c:url value='/admin/manage_tables'/>">
+                            Manage tables
+                        </a>
+                    </li>
+                    <li>
+        				<a href="<c:url value='/admin/floor_plan'/>">
+            				View floor plan (beta)
+        				</a>
+    				</li>
+                </ul>
+
+                <hr class="management-separator"/>
+
+                <a class="danger-link" href="<c:url value='/logout'/>">
+                    Logout
+                </a>
+            </div>
+        </div>
+
+    </div><!-- /dashboard-grid -->
+</div><!-- /dashboard-main -->
+
 </body>
 </html>
