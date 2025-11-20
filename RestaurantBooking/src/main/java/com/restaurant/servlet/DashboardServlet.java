@@ -30,29 +30,31 @@ public class DashboardServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-
+        
+        Integer restaurantId = (Integer) session.getAttribute("restaurantId");
+        
         try (Connection conn = DatabaseUtility.getConnection(getServletContext())) {
 
-            long totalBookings = runCount(conn,
-                    "SELECT COUNT(*) FROM bookings");
+            // total bookings for this restaurant (or all if null)
+            String totalSql = (restaurantId != null)
+                ? "SELECT COUNT(*) FROM bookings WHERE restaurant_id = ?"
+                : "SELECT COUNT(*) FROM bookings";
+            long totalBookings = runCount(conn, totalSql, restaurantId);
 
-            LocalDate today = LocalDate.now();
-            long bookingsToday;
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "SELECT COUNT(*) FROM bookings WHERE booking_date = ?")) {
-                ps.setString(1, today.toString());          // "YYYY-MM-DD"
-                try (ResultSet rs = ps.executeQuery()) {
-                    bookingsToday = rs.next() ? rs.getLong(1) : 0L;
-                }
-            }
+            // bookings today for this restaurant
+            String todaySql = (restaurantId != null)
+                ? "SELECT COUNT(*) FROM bookings WHERE booking_date = date('now') AND restaurant_id = ?"
+                : "SELECT COUNT(*) FROM bookings WHERE booking_date = date('now')";
+            long bookingsToday = runCount(conn, todaySql, restaurantId);
 
+            // distinct customers
+            String distinctSql = (restaurantId != null)
+                ? "SELECT COUNT(DISTINCT user_id) FROM bookings WHERE user_id IS NOT NULL AND restaurant_id = ?"
+                : "SELECT COUNT(DISTINCT user_id) FROM bookings WHERE user_id IS NOT NULL";
+            long distinctCustomers = runCount(conn, distinctSql, restaurantId);
 
-            long distinctCustomers = runCount(conn,
-                    "SELECT COUNT(DISTINCT user_id) " +
-                    "FROM bookings " +
-                    "WHERE user_id IS NOT NULL");
-
-            Map<String, Long> statusCounts = loadStatusCounts(conn);
+            // status counts
+            Map<String, Long> statusCounts = loadStatusCounts(conn, restaurantId);
 
             req.setAttribute("totalBookings", totalBookings);
             req.setAttribute("bookingsToday", bookingsToday);
@@ -72,52 +74,62 @@ public class DashboardServlet extends HttpServlet {
     /**
      * Helper method to execute a simple SELECT COUNT(*) ... query.
      */
-    private long runCount(Connection conn, String sql) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            return rs.next() ? rs.getLong(1) : 0L;
+    private long runCount(Connection conn, String sql, Integer restaurantId) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (restaurantId != null) {
+                ps.setInt(1, restaurantId);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : 0L;
+            }
         }
     }
+
     /**
      * Load counts of bookings grouped by status.
      * Ensures we always return all four known statuses,
      * even if some are zero.
      */
-    private Map<String, Long> loadStatusCounts(Connection conn) throws SQLException {
-        String sql = """
-            SELECT booking_status, COUNT(*) 
-            FROM bookings
-            GROUP BY booking_status
-        """;
+    private Map<String, Long> loadStatusCounts(Connection conn, Integer restaurantId) throws SQLException {
+        String sql;
+        if (restaurantId != null) {
+            sql = """
+                  SELECT booking_status, COUNT(*)
+                  FROM bookings
+                  WHERE restaurant_id = ?
+                  GROUP BY booking_status
+                  """;
+        } else {
+            sql = """
+                  SELECT booking_status, COUNT(*)
+                  FROM bookings
+                  GROUP BY booking_status
+                  """;
+        }
 
         Map<String, Long> result = new LinkedHashMap<>();
-
-        // Initialize with 0 so JSP doesn't have to worry if a status is missing
         result.put("PENDING",   0L);
         result.put("CONFIRMED", 0L);
         result.put("SEATED",    0L);
         result.put("CANCELLED", 0L);
 
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                String status = rs.getString(1);
-                long count = rs.getLong(2);
-
-                if (status != null) {
-                    status = status.toUpperCase();
-                    if (result.containsKey(status)) {
-                        result.put(status, count);
-                    } else {
-                        // In case a new status appears in the future
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (restaurantId != null) {
+                ps.setInt(1, restaurantId);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String status = rs.getString(1);
+                    long count    = rs.getLong(2);
+                    if (status != null) {
+                        status = status.toUpperCase();
                         result.put(status, count);
                     }
                 }
             }
         }
-
         return result;
     }
+
 
 }

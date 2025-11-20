@@ -19,44 +19,19 @@
     <div class="dashboard-header">
         <h1>Administrator Dashboard</h1>
         <p class="dashboard-subtitle">
-            Welcome, <strong>${sessionScope.email}</strong>
+            Welcome,
+            <strong>${sessionScope.user.firstName} ${sessionScope.user.lastName}</strong>
+            (<c:out value="${sessionScope.email}" />)
         </p>
     </div>
 
+    <!-- Any error message from the servlet -->
+    <c:if test="${not empty reportError}">
+        <p class="flash-message flash-error">${reportError}</p>
+    </c:if>
+
     <!-- Main grid: left = metrics + status, right = management -->
     <div class="dashboard-grid">
-
-      <table class="status-table">
-          <thead>
-              <tr>
-                  <th>Status</th>
-                  <th>Count</th>
-              </tr>
-          </thead>
-          <tbody>
-              <tr>
-                  <td>Pending</td>
-                  <td>${statusCounts['PENDING']}</td>
-              </tr>
-              <tr>
-                  <td>Confirmed</td>
-                  <td>${statusCounts['CONFIRMED']}</td>
-              </tr>
-              <tr>
-                  <td>Seated</td>
-                  <td>${statusCounts['SEATED']}</td>
-              </tr>
-              <tr>
-                  <td>Cancelled</td>
-                  <td>${statusCounts['CANCELLED']}</td>
-              </tr>
-          </tbody>
-      </table>
-   
-      	<h2>Management Options</h2>
-		<ul>
-   		 	<li><a href="<c:url value='/admin/manage_tables'/>">Manage Tables</a></li>
-		</ul>
 
         <!-- LEFT COLUMN -->
         <div>
@@ -88,12 +63,22 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <c:forEach var="entry" items="${statusCounts}">
-                        <tr>
-                            <td>${entry.key}</td>
-                            <td>${entry.value}</td>
-                        </tr>
-                    </c:forEach>
+                    <tr>
+                        <td>PENDING</td>
+                        <td>${statusCounts['PENDING']}</td>
+                    </tr>
+                    <tr>
+                        <td>CONFIRMED</td>
+                        <td>${statusCounts['CONFIRMED']}</td>
+                    </tr>
+                    <tr>
+                        <td>SEATED</td>
+                        <td>${statusCounts['SEATED']}</td>
+                    </tr>
+                    <tr>
+                        <td>CANCELLED</td>
+                        <td>${statusCounts['CANCELLED']}</td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
@@ -112,10 +97,11 @@
                         </a>
                     </li>
                     <li>
-        				<a href="<c:url value='/admin/floor_plan'/>">
-            				View floor plan (beta)
-        				</a>
-    				</li>
+                        <a class="primary-link"
+                           href="<c:url value='/admin/floor_plan'/>">
+                            View floor plan (beta)
+                        </a>
+                    </li>
                 </ul>
 
                 <hr class="management-separator"/>

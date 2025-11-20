@@ -63,15 +63,6 @@ public class DatabaseInitializer implements ServletContextListener {
                             );
                         """);
 
-                        // Add default restaurants
-                        stmt.executeUpdate("""
-                            INSERT OR IGNORE INTO restaurants
-                            (restaurant_id, name, address, phone, description)
-                            VALUES
-                              (1, 'Central Grill',  '100 Main St', '(555) 000-1111', 'Modern American cuisine'),
-                              (2, 'Sushi Palace',   '200 Ocean Ave', '(555) 222-3333', 'Fresh sushi & sashimi'),
-                              (3, 'Pasta Corner',   '300 Olive Rd',  '(555) 444-5555', 'Cozy Italian dining');
-                        """);
                     
                     stmt.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS users (
@@ -227,16 +218,39 @@ public class DatabaseInitializer implements ServletContextListener {
                       VALUES('ADMIN'),('MANAGER'),('EMPLOYEE'),('HOST'),('CUSTOMER');
                     """);
 
-                    // 2) Admin user
+                 // 2) Admin users (one per restaurant)
                     stmt.executeUpdate("""
                       INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active)
-                      VALUES (1, 'admin', 'Admin', 'User', 'admin@example.com', 'admin', '0000000000', 1);
+                      VALUES 
+                          (1, 'admin', 'Admin', 'User', 'admin@centralgrill.com', 'admin', '1234564789', 1),
+                          (2, 'admin', 'Admin', 'User', 'admin@sushipalace.com',  'admin', '1234566789', 1),
+                          (3, 'admin', 'Admin', 'User', 'admin@pastacorner.com',  'admin', '1234556789', 1);
                     """);
 
-                    // 3) Link admin -> ADMIN role
+                    // 3) Link ALL admin users -> ADMIN role (don’t rely on hard-coded user_id)
                     stmt.executeUpdate("""
                       INSERT OR IGNORE INTO users_to_user_roles(user_id, role_id)
-                      SELECT 1, role_id FROM user_roles WHERE role_name='ADMIN';
+                      SELECT u.user_id, r.role_id
+                      FROM users u
+                      JOIN user_roles r ON r.role_name = 'ADMIN'
+                      WHERE u.email IN (
+                        'admin@centralgrill.com',
+                        'admin@sushipalace.com',
+                        'admin@pastacorner.com'
+                      );
+                    """);
+
+
+                    
+
+                    // Add default restaurants
+                    stmt.executeUpdate("""
+                        INSERT OR IGNORE INTO restaurants
+                        (restaurant_id, name, address, phone, description)
+                        VALUES
+                          (1, 'Central Grill',  '100 Main St', '(555) 000-1111', 'Modern American cuisine'),
+                          (2, 'Sushi Palace',   '200 Ocean Ave', '(555) 222-3333', 'Fresh sushi & sashimi'),
+                          (3, 'Pasta Corner',   '300 Olive Rd',  '(555) 444-5555', 'Cozy Italian dining');
                     """);
                     
 
@@ -440,10 +454,10 @@ public class DatabaseInitializer implements ServletContextListener {
                 String findUser = "SELECT user_id FROM users WHERE email=?";
                 String findTable = "SELECT table_id FROM restaurant_tables WHERE table_number=?";
                 String insertBooking = """
-                	    INSERT INTO bookings(user_id, restaurant_id, number_of_guests, booking_date, booking_time,
-                	                         special_requests, booking_status, created)
-                	    VALUES (?,?,?,?,?,?,?,?)
-                	""";
+                        INSERT INTO bookings(user_id, restaurant_id, number_of_guests, booking_date, booking_time,
+                                             special_requests, booking_status, created)
+                        VALUES (?,?,?,?,?,?,?,?)
+                    """;
                 String insertLink = "INSERT OR IGNORE INTO booking_tables(booking_id, table_id) VALUES(?,?)";
                 String lastId = "SELECT last_insert_rowid()";
 
@@ -462,7 +476,20 @@ public class DatabaseInitializer implements ServletContextListener {
                         String email = p[0].trim().toLowerCase();
                         int restaurantId = Integer.parseInt(p[1].trim());
                         int guests = Integer.parseInt(p[2].trim());
-                        String bDate = p[3].trim();
+
+                        // --- CONVERT CSV DATE "MM/dd/yyyy" -> "yyyy-MM-dd" ---
+                        String rawDate = p[3].trim();
+                        String bDateIso = rawDate;
+                        try {
+                            java.time.format.DateTimeFormatter srcFmt =
+                                    java.time.format.DateTimeFormatter.ofPattern("M/d/yyyy");
+                            java.time.LocalDate ld = java.time.LocalDate.parse(rawDate, srcFmt);
+                            bDateIso = ld.toString();   // ISO yyyy-MM-dd
+                        } catch (Exception ex) {
+                            System.out.println("Could not parse booking_date '" + rawDate + "', keeping as-is.");
+                        }
+                        // ----------------------------------------------------
+
                         String bTime = p[4].trim();
                         String req   = p[5].trim();
                         String status= p[6].trim();
@@ -484,7 +511,7 @@ public class DatabaseInitializer implements ServletContextListener {
                         psInsB.setInt(1, userId);
                         psInsB.setInt(2, restaurantId);
                         psInsB.setInt(3, guests);
-                        psInsB.setString(4, bDate);
+                        psInsB.setString(4, bDateIso);    // <- ISO date
                         psInsB.setString(5, bTime);
                         psInsB.setString(6, req);
                         psInsB.setString(7, status);
@@ -505,6 +532,8 @@ public class DatabaseInitializer implements ServletContextListener {
             }
         }
     }
+
+
 
     private void loadWaitlists(ServletContext ctx, String resourcePath, String url) throws Exception {
         try (var in = ctx.getResourceAsStream(resourcePath)) {
@@ -537,7 +566,7 @@ public class DatabaseInitializer implements ServletContextListener {
                         special_requests,
                         created
                     )
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """;
 
                 try (var psFind = conn.prepareStatement(findUser);

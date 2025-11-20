@@ -1,6 +1,5 @@
 /*style.css*/
-body{
-    background-color:lightgrey;
+
 /* Global defaults for all pages */
 body {
     background-color: lightgray;
@@ -546,4 +545,84 @@ body {
     .floor-row-label {
         margin-bottom: 6px;
     }
+}
+
+/* --- Home (landing) layout --- */
+
+.home-body {
+    margin: 0;
+    min-height: 100vh;
+    background: #e3e3e3;
+    font-family: Arial, sans-serif;
+}
+
+.home-main {
+    max-width: 1000px;
+    margin: 60px auto 40px;
+    padding: 0 20px 40px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Reuse existing auth card styles for the center box (already defined) */
+
+/* Restaurant list under the card */
+.restaurant-list-container {
+    width: 100%;
+    margin-top: 24px;
+}
+
+.restaurant-list-title {
+    margin: 0 0 16px;
+    text-align: center;
+}
+
+/* Three restaurants left-to-right in their own boxes */
+.restaurant-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+}
+
+.restaurant-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    padding: 16px;
+    box-sizing: border-box;
+    width: 260px;          /* gives you 3 nicely sized boxes */
+}
+
+.restaurant-card h3 {
+    margin-top: 0;
+    margin-bottom: 6px;
+}
+
+.restaurant-card .address {
+    margin: 0 0 4px;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.restaurant-card .desc {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.view-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    background-color: #4a7ae5;
+    color: #fff;
+}
+
+.view-btn:hover {
+    opacity: 0.9;
 }

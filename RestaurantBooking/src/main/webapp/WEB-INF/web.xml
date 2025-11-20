@@ -13,7 +13,7 @@
 	
 	<context-param>
   		<param-name>resetDatabaseOnStartup</param-name>
-  		<param-value>false</param-value>
+  		<param-value>True</param-value>
 	</context-param>
 	<filter>
   		<filter-name>EncodingFilter</filter-name>

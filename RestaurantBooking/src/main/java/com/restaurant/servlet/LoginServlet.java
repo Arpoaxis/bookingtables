@@ -17,57 +17,77 @@ public class LoginServlet extends HttpServlet {
 
     }
     
-    	@Override
-    	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-    	throws ServletException, IOException {
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
         String email = request.getParameter("email");
         String password = request.getParameter("password");
-        
+
         String dbpath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
 
-        
         User user = LoginDao.validate(email, password, dbpath);
-        
+
         if (user == null) {
             System.out.println("[LoginServlet] authentication FAILED for email='" + email + "'");
-            
-        	request.setAttribute("error", "Invalid email or password.");
-			request.getRequestDispatcher("/WEB-INF/jsp/login/login_page.jsp").forward(request, response);
-			return;
-		}
+            request.setAttribute("error", "Invalid email or password.");
+            request.getRequestDispatcher("/WEB-INF/jsp/login/login_page.jsp")
+                   .forward(request, response);
+            return;
+        }
 
-        System.out.println("[LoginServlet] authentication SUCCESS for email='" + email + "' role='" + user.getAccountType() + "'");
-        // Extra safety: make sure password isn't stored in session
+        System.out.println("[LoginServlet] authentication SUCCESS for email='" 
+                + email + "' role='" + user.getAccountType() + "'");
+
+        // Never keep password in session
         user.setPassword(null);
-        // Session fixation protection:
-        
-        // 1) kill any old session
+
+        // Session fixation protection
         HttpSession oldSession = request.getSession(false);
         if (oldSession != null) {
             oldSession.invalidate();
         }
-        // 2) create a brand-new session
         HttpSession session = request.getSession(true);
-        
+
         session.setAttribute("user", user);
         session.setAttribute("email", user.getEmail());
         session.setAttribute("role", user.getAccountType());
-        session.setAttribute("userId", user.getUserId()); 
+        session.setAttribute("userId", user.getUserId());
 
-        String returnUrl = (String)session.getAttribute("returnAfterLogin");
+        // Map admin email → restaurant id
+        if ("ADMIN".equalsIgnoreCase(user.getAccountType())
+                || "MANAGER".equalsIgnoreCase(user.getAccountType())) {
+
+            Integer restaurantId = null;
+            if (email.endsWith("@centralgrill.com")) {
+                restaurantId = 1;
+            } else if (email.endsWith("@sushipalace.com")) {
+                restaurantId = 2;
+            } else if (email.endsWith("@pastacorner.com")) {
+                restaurantId = 3;
+            }
+            if (restaurantId != null) {
+                session.setAttribute("restaurantId", restaurantId);
+            }
+        }
+
+        // Handle “return after login” if present
+        String returnUrl = (String) session.getAttribute("returnAfterLogin");
         session.removeAttribute("returnAfterLogin");
-
-        if (returnUrl != null) {
+        if (returnUrl != null && !returnUrl.isBlank()) {
             response.sendRedirect(request.getContextPath() + returnUrl);
             return;
         }
 
-        // Default redirects
+        // ===== DEFAULT REDIRECTS =====
         if ("ADMIN".equalsIgnoreCase(user.getAccountType())
                 || "MANAGER".equalsIgnoreCase(user.getAccountType())) {
+            // Admin / manager → their filtered dashboard
             response.sendRedirect(request.getContextPath() + "/admin/dashboard");
         } else {
+            // Customer → home / restaurant list
             response.sendRedirect(request.getContextPath() + "/");
         }
     }
+
 }
