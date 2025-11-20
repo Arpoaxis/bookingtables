@@ -9,11 +9,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
 
-
+import com.restaurant.dao.DashboardDao;
 import com.restaurant.util.DatabaseUtility;
 
 @WebServlet("/admin/dashboard")
@@ -35,17 +36,23 @@ public class DashboardServlet extends HttpServlet {
             long totalBookings = runCount(conn,
                     "SELECT COUNT(*) FROM bookings");
 
-            long bookingsToday = runCount(conn,
-                    "SELECT COUNT(*) FROM bookings " +
-                    "WHERE booking_date = date('now')");
+            LocalDate today = LocalDate.now();
+            long bookingsToday;
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT COUNT(*) FROM bookings WHERE booking_date = ?")) {
+                ps.setString(1, today.toString());          // "YYYY-MM-DD"
+                try (ResultSet rs = ps.executeQuery()) {
+                    bookingsToday = rs.next() ? rs.getLong(1) : 0L;
+                }
+            }
+
 
             long distinctCustomers = runCount(conn,
                     "SELECT COUNT(DISTINCT user_id) " +
                     "FROM bookings " +
                     "WHERE user_id IS NOT NULL");
-            
-            Map<String, Long> statusCounts = loadStatusCounts(conn);
 
+            Map<String, Long> statusCounts = loadStatusCounts(conn);
 
             req.setAttribute("totalBookings", totalBookings);
             req.setAttribute("bookingsToday", bookingsToday);
@@ -54,14 +61,13 @@ public class DashboardServlet extends HttpServlet {
 
         } catch (SQLException e) {
             e.printStackTrace();
-
             req.setAttribute("reportError", "Unable to load dashboard statistics.");
         }
-
 
         req.getRequestDispatcher("/WEB-INF/jsp/admin/dashboard.jsp")
            .forward(req, resp);
     }
+
 
     /**
      * Helper method to execute a simple SELECT COUNT(*) ... query.
