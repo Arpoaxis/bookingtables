@@ -4,70 +4,75 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restaurant Booking</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
-<body>
-	
-    <jsp:include page="/WEB-INF/jsp/header.jsp"/>
-    <h1>Restaurant Booking</h1>
 
-    <%-- USER LOGIN / ROLE LOGIC START --%>
-    <c:choose>
+<body class="home-body">
 
-        <c:when test="${not empty sessionScope.user}">
-            <%-- LOGGED IN USER AREA --%>
+<jsp:include page="/WEB-INF/jsp/header.jsp"/>
 
-            <p>
-                Welcome,
-                <c:out value="${sessionScope.user.firstName}" />
-                (<c:out value="${sessionScope.user.email}" />)
-            </p>
+<div class="home-main">
 
-            <c:if test="${sessionScope.role == 'ADMIN' || sessionScope.role == 'MANAGER'}">
-                <a href="<c:url value='/admin/dashboard'/>">Administrator Dashboard</a>
-            </c:if>
+    <%-- Center white card --%>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h1 class="auth-title">Welcome to Restaurant Booking</h1>
 
-            <c:if test="${sessionScope.role == 'CUSTOMER'}">
-                <a href="<c:url value='/'/>">Home</a>
-            </c:if>
+            <c:choose>
 
-            <p><a href="<c:url value='/logout'/>">Logout</a></p>
-        </c:when>
+                <%-- Logged in --%>
+                <c:when test="${not empty sessionScope.email}">
+                    <p class="auth-subtitle">
+                        You are logged in as
+                        <strong>${sessionScope.email}</strong>.
+                    </p>
 
-        <c:otherwise>
-            <%-- NOT LOGGED IN MESSAGE --%>
-            <p>Please <a href="<c:url value='/login'/>">login</a> to continue.</p>
-        </c:otherwise>
+                    <div class="auth-actions">
 
-    </c:choose>
-    <%-- USER LOGIN / ROLE LOGIC END --%>
+                        <c:if test="${sessionScope.role == 'ADMIN' or sessionScope.role == 'MANAGER'}">
+                            <a class="auth-primary-button" href="<c:url value='/admin/dashboard'/>">
+                                Go to Dashboard
+                            </a>
+                        </c:if>
 
+                        <a class="auth-link-button" href="<c:url value='/logout'/>">
+                            Logout
+                        </a>
+                    </div>
+                </c:when>
 
-    <%-- RESTAURANT LIST --%>
+                <%-- Not logged in --%>
+                <c:otherwise>
+                    <p class="auth-subtitle">
+                        Please log in to choose a restaurant and make a booking.
+                    </p>
+
+                    <div class="auth-actions">
+                        <a class="auth-primary-button" href="<c:url value='/login'/>">
+                            Login
+                        </a>
+                        <a class="auth-link-button" href="<c:url value='/register'/>">
+                            Register
+                        </a>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+
+        </div>
+    </div>
+
+    <%-- Restaurants underneath the card --%>
     <div class="restaurant-list-container">
-        <h2>Choose a Restaurant</h2>
-
-        <c:if test="${not empty error}">
-            <p style="color:red;">${error}</p>
-        </c:if>
+        <h2 class="restaurant-list-title">Choose a Restaurant</h2>
 
         <c:if test="${empty restaurants}">
-            <p>No restaurants found.</p>
+            <p style="text-align:center;">No restaurants found.</p>
         </c:if>
 
         <div class="restaurant-grid">
-
             <c:forEach var="r" items="${restaurants}">
                 <div class="restaurant-card">
-
-                 <%-- Do not have images yet 
-                 <img src="<c:url value='/images/restaurant_default.jpg' />"
-				     alt="Restaurant image"
-				     class="restaurant-img"--%>
-
-
                     <div class="restaurant-info">
                         <h3>${r.name}</h3>
                         <p class="address">${r.address}</p>
@@ -75,16 +80,15 @@
 
                         <a class="view-btn"
                            href="<c:url value='/restaurant?id=${r.restaurantId}'/>">
-
                             View Restaurant
                         </a>
                     </div>
-
                 </div>
             </c:forEach>
-
         </div>
     </div>
+
+</div><%-- /.home-main --%>
 
 </body>
 </html>

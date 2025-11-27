@@ -1,9 +1,12 @@
 /*style.css*/
-body{
-    background-color:lightgrey;
+
+/* Global defaults for all pages */
+body {
+    background-color: lightgray;
     margin: 0;
     font-family: Arial, sans-serif;
 }
+
 .home-link{
 	position: absolute;
 	top: 10px;
@@ -60,4 +63,566 @@ body{
 }
 .td{
 	padding:10px;
+}
+
+/* --- Flash messages --- */
+.flash-message {
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 0.95rem;
+}
+
+.flash-success {
+    background-color: #e6f7e9;
+    border: 1px solid #5cb85c;
+    color: #256d2b;
+}
+
+.flash-error {
+    background-color: #fde8e8;
+    border: 1px solid #d9534f;
+    color: #a00000;
+}
+
+/* --- Toolbar (buttons row at top) --- */
+.toolbar {
+    margin: 15px 0 20px 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* --- Generic buttons --- */
+.btn {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 0.85rem;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.btn-danger {
+    background-color: #d9534f;
+    color: #fff;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+/* --- Table wrapper --- */
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+/* --- Data table styling --- */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.data-table th,
+.data-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.data-table thead {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.data-table tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.data-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* --- Badges for 'can combine' --- */
+.badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
+
+.badge-yes {
+    background-color: #e6f7e9;
+    color: #256d2b;
+}
+
+.badge-no {
+    background-color: #fde8e8;
+    color: #a00000;
+}
+
+/* --- Actions column --- */
+.table-actions {
+    white-space: nowrap;
+}
+
+/* -------- Auth / Landing Layout -------- */
+
+.auth-body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e3e3e3;
+    font-family: Arial, sans-serif;
+}
+
+.auth-wrapper {
+    width: 100%;
+    max-width: 420px;
+    padding: 24px;
+}
+
+.auth-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 24px 28px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.auth-title {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 24px;
+    text-align: center;
+}
+
+.auth-subtitle {
+    margin: 0 0 20px;
+    font-size: 14px;
+    text-align: center;
+    color: #555;
+}
+
+.auth-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.auth-link-button,
+.auth-primary-button {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.auth-primary-button {
+    background-color: #4a7ae5;
+    color: #fff;
+    border: none;
+}
+
+.auth-primary-button:hover {
+    background-color: #395ecc;
+}
+
+.auth-link-button {
+    background-color: transparent;
+    border: 1px solid #4a7ae5;
+    color: #4a7ae5;
+}
+
+.auth-link-button:hover {
+    background-color: #eef3ff;
+}
+
+/* Register form layout */
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auth-form label {
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="password"],
+.auth-form input[type="tel"],
+.auth-form input[type="email"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: #4a7ae5;
+}
+
+.auth-error {
+    margin-top: 10px;
+    color: #c0392b;
+    font-size: 13px;
+    text-align: center;
+}
+
+.auth-footer-text {
+    margin-top: 16px;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* ===== Admin Dashboard Layout ===== */
+
+.dashboard-body {
+    background-color: #d3d3d3;   /* light grey background */
+    font-family: Arial, sans-serif;
+}
+
+.dashboard-main {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px 40px;
+    box-sizing: border-box;
+}
+
+.dashboard-header h1 {
+    margin: 0 0 6px;
+}
+
+.dashboard-subtitle {
+    margin: 0 0 24px;
+    color: #444;
+    font-size: 0.95rem;
+}
+
+/* two-column layout: left = metrics + status, right = management */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-gap: 20px;
+}
+
+/* generic card */
+.dashboard-card {
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.dashboard-card h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+/* top numbers row */
+.dashboard-cards-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 12px;
+}
+
+.metric-card {
+    text-align: center;
+}
+
+.metric-label {
+    margin: 0 0 4px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.metric-number {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+/* bookings by status table */
+.status-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 0.95rem;
+}
+
+.status-table th,
+.status-table td {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: left;
+}
+
+.status-table th {
+    background: #f0f0f0;
+}
+
+/* management card */
+.management-card .management-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0 0 10px;
+}
+
+.management-card .management-list li {
+    margin-bottom: 8px;
+}
+
+.primary-link {
+    font-weight: bold;
+    text-decoration: none;
+    color: #0044cc;
+}
+
+.primary-link:hover {
+    text-decoration: underline;
+}
+
+.management-separator {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 10px 0;
+}
+
+.danger-link {
+    color: #b00020;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.danger-link:hover {
+    text-decoration: underline;
+}
+
+/* responsive: stack columns on smaller screens */
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-cards-row {
+        grid-template-columns: 1fr;
+    }
+}
+/* ===== Floor Plan Layout (visual room) ===== */
+
+.floorplan-main {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px 40px;
+}
+
+.floorplan-subtitle {
+    margin-top: 4px;
+    margin-bottom: 20px;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.floorplan-room {
+    background: #fdfdfd;
+    border-radius: 12px;
+    padding: 20px 24px 16px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    border: 1px solid #ddd;
+}
+
+/* each row represents a physical row of tables */
+.floor-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.floor-row-label {
+    width: 140px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+.floor-row-tables {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* aisle between rows */
+.floor-aisle {
+    margin: 10px 0 18px;
+    padding: 6px 0;
+    border-top: 2px dashed #bbb;
+    border-bottom: 2px dashed #bbb;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #777;
+}
+
+/* circular “tables” */
+.table-node {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.table-node-number {
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+/* capacity-based color cues */
+.table-cap-2 {
+    border-color: #4a7ae5;
+}
+
+.table-cap-4 {
+    border-color: #28a745;
+}
+
+.table-cap-big {
+    border-color: #d9534f;
+}
+
+/* back wall label */
+.floor-back-wall {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 3px solid #555;
+    font-size: 0.8rem;
+    text-align: right;
+    color: #555;
+}
+
+/* small screen tweak */
+@media (max-width: 800px) {
+    .floor-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .floor-row-label {
+        margin-bottom: 6px;
+    }
+}
+
+/* --- Home (landing) layout --- */
+
+.home-body {
+    margin: 0;
+    min-height: 100vh;
+    background: #e3e3e3;
+    font-family: Arial, sans-serif;
+}
+
+.home-main {
+    max-width: 1000px;
+    margin: 60px auto 40px;
+    padding: 0 20px 40px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Reuse existing auth card styles for the center box (already defined) */
+
+/* Restaurant list under the card */
+.restaurant-list-container {
+    width: 100%;
+    margin-top: 24px;
+}
+
+.restaurant-list-title {
+    margin: 0 0 16px;
+    text-align: center;
+}
+
+/* Three restaurants left-to-right in their own boxes */
+.restaurant-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+}
+
+.restaurant-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    padding: 16px;
+    box-sizing: border-box;
+    width: 260px;          /* gives you 3 nicely sized boxes */
+}
+
+.restaurant-card h3 {
+    margin-top: 0;
+    margin-bottom: 6px;
+}
+
+.restaurant-card .address {
+    margin: 0 0 4px;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.restaurant-card .desc {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.view-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    background-color: #4a7ae5;
+    color: #fff;
+}
+
+.view-btn:hover {
+    opacity: 0.9;
 }
