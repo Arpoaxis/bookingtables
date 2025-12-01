@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BookingDao {
-    // 1) CREATE NEW BOOKING  (you already had this)
+	// 1) CREATE BOOKING
     public static void createBooking(ServletContext ctx, int userId, int restaurantId,
                                      int guests, String date, String time, String requests)
             throws Exception {
@@ -33,7 +33,7 @@ public class BookingDao {
             ps.executeUpdate();
         }
     }
-    // 2) GET ALL BOOKINGS FOR A USER 
+    // 2) VIEW BOOKINGS
     public static List<Booking> getBookingsForUser(ServletContext ctx, int userId) throws Exception {
         List<Booking> list = new ArrayList<>();
 

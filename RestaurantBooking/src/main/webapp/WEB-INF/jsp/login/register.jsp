@@ -9,6 +9,11 @@
 </head>
 
 <body class="auth-body">
+	<div class="auth-top-link">
+	    <a href="${pageContext.request.contextPath}/">
+	        ⟵ Back to Home
+	    </a>
+	</div>
 <div class="auth-wrapper">
     <div class="auth-card">
 

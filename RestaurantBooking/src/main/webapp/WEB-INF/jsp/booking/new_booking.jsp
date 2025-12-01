@@ -6,41 +6,88 @@
     <title>Make a Reservation</title>
     <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
+
 <body>
 
 <jsp:include page="/WEB-INF/jsp/header.jsp"/>
 
-<div class="booking-form-container">
+<div class="booking-page">
 
-    <h1>Reserve at ${restaurant.name}</h1>
+    <div class="booking-card">
 
-    <c:if test="${not empty error}">
-        <p style="color:red">${error}</p>
-    </c:if>
+        <h1 class="booking-title">Reserve at ${restaurant.name}</h1>
 
-    <form action="<c:url value='/booking/create'/>" method="post">
+        <%-- Display error message if present --%>
+        <c:if test="${not empty error}">
+            <div class="booking-error">${error}</div>
+        </c:if>
 
-        <%-- CSRF token --%>
-        <input type="hidden" name="csrf_token" value="${csrfToken}"/>
+        <form action="<c:url value='/booking/create'/>" method="post" class="booking-form">
 
-        <input type="hidden" name="restaurantId" value="${restaurant.restaurantId}"/>
+            <%-- CSRF token --%>
+            <input type="hidden" name="csrf_token" value="${csrfToken}"/>
 
-        <label>Date:</label>
-        <input type="date" name="date" required><br><br>
+            <%-- Restaurant ID --%>
+            <input type="hidden" name="restaurantId" value="${restaurant.restaurantId}"/>
 
-        <label>Time:</label>
-        <input type="time" name="time" required><br><br>
+            <label>Date</label>
+            <input type="date" id="datePicker" name="date" required>
 
-        <label>Number of Guests:</label>
-        <input type="number" name="guests" min="1" required><br><br>
+            <label>Time</label>
+           
+            <select id="timeSlot" name="time" required>
+			  
+			    <option value="08:00">08:00</option>
+			    <option value="09:00">09:00</option>
+			    <option value="10:00">10:00</option>
+			    <option value="11:00">11:00</option>
+			    <option value="12:00">12:00</option>
+			    <option value="13:00">13:00</option>
+			    <option value="14:00">14:00</option>
+			    <option value="15:00">15:00</option>
+			    <option value="16:00">16:00</option>
+			    <option value="17:00">17:00</option>
+			    <option value="18:00">18:00</option>
+			   
+			</select>
 
-        <label>Special Requests:</label>
-        <textarea name="requests" rows="3"></textarea><br><br>
+            <label>Number of Guests</label>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="range" id="guestSlider" name="guests" min="1" max="20" value="2">
+                <span id="guestCount">2</span>
+            </div>
 
-        <button type="submit">Confirm Reservation</button>
-    </form>
+            <label>Special Requests</label>
+            <textarea name="requests" rows="3"></textarea>
+
+            <button type="submit" class="btn btn-primary booking-btn">
+                Confirm Reservation
+            </button>
+
+        </form>
+
+    </div>
 
 </div>
+
+<script>
+
+
+const slider = document.getElementById("guestSlider");
+const guestCount = document.getElementById("guestCount");
+
+slider.addEventListener("input", () => {
+    guestCount.textContent = slider.value;
+    loadTimes(); 
+});
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("datePicker").setAttribute("min", today);
+});
+</script>
+
+</script>
 
 </body>
 </html>
