@@ -64,19 +64,23 @@ public class DatabaseInitializer implements ServletContextListener {
                         """);
 
                     
-                    stmt.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS users (
-                            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            username TEXT NOT NULL,
-                            first_name TEXT NOT NULL,
-                            last_name  TEXT NOT NULL,
-                            email TEXT NOT NULL UNIQUE,
-                            password TEXT,
-                            phone_number TEXT NOT NULL UNIQUE,
-                            created TEXT NOT NULL DEFAULT (datetime('now')),
-                            active  INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1))
-                        );
-                    """);
+                	stmt.executeUpdate("""
+                		    CREATE TABLE IF NOT EXISTS users (
+                		        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                		        username TEXT NOT NULL,
+                		        first_name TEXT NOT NULL,
+                		        last_name  TEXT NOT NULL,
+                		        email TEXT NOT NULL UNIQUE,
+                		        password TEXT,
+                		        phone_number TEXT NOT NULL UNIQUE,
+                		        restaurant_id INTEGER,  -- NULL for customers, set for staff
+                		        created TEXT NOT NULL DEFAULT (datetime('now')),
+                		        active  INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)),
+                		        FOREIGN KEY(restaurant_id) REFERENCES restaurants(restaurant_id)
+                		            ON DELETE SET NULL ON UPDATE NO ACTION
+                		    );
+                		""");
+
 
                     stmt.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS user_roles (
@@ -220,12 +224,14 @@ public class DatabaseInitializer implements ServletContextListener {
 
                  // 2) Admin users (one per restaurant)
                     stmt.executeUpdate("""
-                      INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active)
-                      VALUES 
-                          (1, 'admin', 'Admin', 'User', 'admin@centralgrill.com', 'admin', '1234564789', 1),
-                          (2, 'admin', 'Admin', 'User', 'admin@sushipalace.com',  'admin', '1234566789', 1),
-                          (3, 'admin', 'Admin', 'User', 'admin@pastacorner.com',  'admin', '1234556789', 1);
-                    """);
+                    		  INSERT OR IGNORE INTO users
+                    		  (user_id, username, first_name, last_name, email, password, phone_number, restaurant_id, active)
+                    		  VALUES 
+                    		    (1, 'admin', 'Admin', 'User', 'admin@centralgrill.com', 'admin', '0000000000', 1, 1),
+                    		    (2, 'admin', 'Admin', 'User', 'admin@sushipalace.com',  'admin', '0000000001', 2, 1),
+                    		    (3, 'admin', 'Admin', 'User', 'admin@pastacorner.com',  'admin', '0000000002', 3, 1);
+                    		""");
+
 
                     // 3) Link ALL admin users -> ADMIN role (don’t rely on hard-coded user_id)
                     stmt.executeUpdate("""
@@ -301,39 +307,44 @@ public class DatabaseInitializer implements ServletContextListener {
                 boolean headerSkipped = false;
 
                 String sql = """
-                    INSERT OR IGNORE INTO users
-                    (username, first_name, last_name, email, password, phone_number, created, active)
-                    VALUES (?,?,?,?,?,?,?,?)
-                """;
-                try (java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
-                    while ((line = br.readLine()) != null) {
-                        // skip header
-                        if (!headerSkipped) { headerSkipped = true; continue; }
-                        // split CSV line; your sample has no quoted commas
-                        String[] p = line.split(",", -1);
-                        if (p.length < 8) continue;
+                	    INSERT OR IGNORE INTO users
+                	    (username, first_name, last_name, email, password, phone_number, restaurant_id, created, active)
+                	    VALUES (?,?,?,?,?,?,?,?,?)
+                	""";
 
-                        String username   = p[0].trim();
-                        String firstName  = p[1].trim();
-                        String lastName   = p[2].trim();
-                        String email      = p[3].trim().toLowerCase();
-                        String password   = p[4].trim();
-                        String phone      = p[5].trim();
-                        String created    = p[6].trim();              // e.g. "2025-03-20 17:18:24"
-                        int active        = Integer.parseInt(p[7].trim()); // 0 or 1
+                	try (java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+                	    while ((line = br.readLine()) != null) {
+                	        if (!headerSkipped) { headerSkipped = true; continue; }
 
-                        ps.setString(1, username);
-                        ps.setString(2, firstName);
-                        ps.setString(3, lastName);
-                        ps.setString(4, email);
-                        ps.setString(5, password);  // TODO: hash later
-                        ps.setString(6, phone);
-                        ps.setString(7, created);
-                        ps.setInt(8, active);
-                        ps.addBatch();
-                    }
-                    ps.executeBatch();
-                } catch (Exception ex) {
+                	        String[] p = line.split(",", -1);
+                	        if (p.length < 8) continue;
+
+                	        String username   = p[0].trim();
+                	        String firstName  = p[1].trim();
+                	        String lastName   = p[2].trim();
+                	        String email      = p[3].trim().toLowerCase();
+                	        String password   = p[4].trim();
+                	        String phone      = p[5].trim();
+                	        String created    = p[6].trim();
+                	        int active        = Integer.parseInt(p[7].trim());
+
+                	        ps.setString(1, username);
+                	        ps.setString(2, firstName);
+                	        ps.setString(3, lastName);
+                	        ps.setString(4, email);
+                	        ps.setString(5, password);
+                	        ps.setString(6, phone);
+
+                	        // NEW: restaurant_id from CSV (for now: always NULL)
+                	        ps.setNull(7, java.sql.Types.INTEGER);
+
+                	        ps.setString(8, created);
+                	        ps.setInt(9, active);
+
+                	        ps.addBatch();
+                	    }
+                	    ps.executeBatch();
+                	} catch (Exception ex) {
                     conn.rollback();
                     throw ex;
                 } finally {
