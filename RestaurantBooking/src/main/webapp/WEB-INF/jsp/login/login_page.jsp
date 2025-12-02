@@ -1,60 +1,51 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%
-// If user is already logged in, send them to the home page instead of showing login form
-if (session != null && session.getAttribute("user") != null) {
-    response.sendRedirect(request.getContextPath() + "/");
-    return;
-}
-%>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login Page</title>
-    <link rel="stylesheet" type="text/css" href="<c:url value='/css/style.css'/>">
+    <title>Login</title>
+    <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
-<body>
 
-    <div class="home-link">
-        <p style="margin:10px">
-            <a href="<c:url value='/'/>">Home</a>
-        </p>
-    </div>
+<body class="auth-body">
+	<div class="auth-top-link">
+	    <a href="${pageContext.request.contextPath}/">
+	        ⟵ Back to Home
+	    </a>
+	</div>
+    <div class="auth-wrapper">
+    
+        <div class="auth-card">
+			
+            <h1 class="auth-title">Sign In</h1>
+            <p class="auth-subtitle">
+                Log in to access your reservations.
+            </p>
 
-    <div class="login-container">
-        <h1>Log In</h1>
-
-        <%-- Form posts to your LoginServlet --%>
-        <form action="<c:url value='/login'/>" method="post">
-
-            <div class="input-row">
-                <label for="email">Email:</label>
-                <input type="text" name="email" id="email"/>
-            </div>
-
-            <div class="input-row">
-                <label for="password">Password:</label>
-                <input type="password" name="password" id="password"/>
-            </div>
-
-            <input type="submit" value="Login"/>
-
-            <%-- error message from LoginServlet --%>
+            <!-- Error message -->
             <c:if test="${not empty error}">
-                <p style="color:red;">${error}</p>
+                <div class="auth-error">${error}</div>
             </c:if>
-            <c:if test="${not empty sessionScope.loginMessage}">
-			    <p style="color:red;">${sessionScope.loginMessage}</p>
-			    <c:remove var="loginMessage" scope="session"/>
-			</c:if>
-        </form>
 
-        <div class="register-link">
-            <p>
-                Don't have an account?
+            <form action="<c:url value='/login'/>" method="post" class="auth-form">
+
+                <label for="email">Email</label>
+                <input type="email" name="email" required>
+
+                <label for="password">Password</label>
+                <input type="password" name="password" required>
+
+                <button type="submit" class="auth-primary-button" style="width:100%;">
+                    Login
+                </button>
+            </form>
+
+            <p class="auth-footer-text">
+                Don’t have an account?
                 <a href="<c:url value='/register'/>">Register</a>
             </p>
+
         </div>
     </div>
 

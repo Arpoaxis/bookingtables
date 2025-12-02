@@ -1,54 +1,91 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>My Reservations</title>
-    <link rel="stylesheet" type="text/css" href="<c:url value='/css/style.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
-<body>
-<h1>My Reservations</h1>
 
-<c:if test="${not empty error}">
-    <p style="color:red">${error}</p>
-</c:if>
+<body class="dashboard-body">
 
-<c:if test="${empty bookings}">
-    <p>You have no reservations.</p>
-</c:if>
+    <jsp:include page="/WEB-INF/jsp/header.jsp"/>
 
-<table border="1">
-    <tr>
-        <td>Restaurant</td>
-        <td>Date</td>
-        <td>Time</td>
-        <td>Guests</td>
-        <td>Status</td>
-        <td>Actions</td>
-    </tr>
+    <div class="dashboard-main">
 
-   <c:forEach var="b" items="${bookings}">
-    <c:if test="${b.status != 'CANCELLED'}">
-        <tr>
-            <td>${b.restaurantName}</td>
-            <td>${b.date}</td>     
-            <td>${b.time}</td>     
-            <td>${b.guests}</td>
-            <td>${b.status}</td>
+        <div class="dashboard-card">
 
-            <td>
-                <form action="<c:url value='/booking/cancel'/>" method="post">
-                    <input type="hidden" name="bookingId" value="${b.bookingId}">
-                    <button type="submit">Cancel</button>
-                </form>
-            </td>
-        </tr>
-    </c:if>
-</c:forEach>
+            <h1>My Reservations</h1>
+            <p class="dashboard-subtitle">View and manage your upcoming reservations.</p>
 
-</table>
+            <hr class="management-separator">
 
-<p><a href="<c:url value='/restaurants'/>">Back to Restaurants</a></p>
+            <!-- Error message -->
+            <c:if test="${not empty error}">
+                <div class="error-message">${error}</div>
+            </c:if>
+
+            <!-- No bookings -->
+            <c:if test="${empty bookings}">
+                <p>You have no active reservations.</p>
+            </c:if>
+
+            <!-- Reservation Table -->
+            <c:if test="${not empty bookings}">
+            <div class="table-wrapper">
+                <table class="styled-table">
+
+                    <thead>
+                        <tr>
+                            <th>Restaurant</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Guests</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    <c:forEach var="b" items="${bookings}">
+                        <c:if test="${b.status != 'CANCELLED'}">
+                            <tr>
+                                <td>${b.restaurantName}</td>
+                                <td>${b.date}</td>
+                                <td>${b.time}</td>
+                                <td>${b.guests}</td>
+                                <td>
+                                    <span class="status-badge status-${fn:toLowerCase(b.status)}">
+                                        ${b.status}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <form action="<c:url value='/booking/cancel'/>" method="post">
+                                        <input type="hidden" name="bookingId" value="${b.bookingId}">
+                                        <button type="submit" class="auth-link-button danger-btn">
+                                            Cancel
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </c:if>
+                    </c:forEach>
+                    </tbody>
+
+                </table>
+            </div>
+            </c:if>
+
+            <div style="margin-top:20px;">
+                <a href="<c:url value='/'/>" class="auth-link-button">Back to Restaurants</a>
+            </div>
+
+        </div>
+
+    </div>
+
 </body>
 </html>

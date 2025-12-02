@@ -12,9 +12,10 @@
 	</listener>
 	
 	<context-param>
-  		<param-name>resetDatabaseOnStartup</param-name>
-  		<param-value>True</param-value>
+	    <param-name>resetDatabaseOnStartup</param-name>
+	    <param-value>true</param-value>
 	</context-param>
+
 	<filter>
   		<filter-name>EncodingFilter</filter-name>
   		<filter-class>com.restaurant.filter.EncodingFilter</filter-class>
