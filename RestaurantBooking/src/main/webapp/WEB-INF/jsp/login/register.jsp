@@ -7,15 +7,23 @@
     <title>Create Account - Restaurant Booking</title>
     <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
+
 <body class="auth-body">
+	<div class="auth-top-link">
+	    <a href="${pageContext.request.contextPath}/">
+	        ⟵ Back to Home
+	    </a>
+	</div>
 <div class="auth-wrapper">
     <div class="auth-card">
+
         <h1 class="auth-title">Create your account</h1>
         <p class="auth-subtitle">
             Fill in your details to start booking and managing tables.
         </p>
 
         <form class="auth-form" action="<c:url value='/register'/>" method="post">
+
             <div>
                 <label for="firstName">First Name</label>
                 <input id="firstName" name="firstName" type="text"
@@ -56,7 +64,8 @@
                 <input id="confirmPassword" name="confirmPassword" type="password" required>
             </div>
 
-            <button type="submit" class="auth-primary-button" style="width:100%; margin-top:8px;">
+            <button type="submit" class="auth-primary-button" 
+                    style="width:100%; margin-top:8px;">
                 Register
             </button>
         </form>
@@ -69,6 +78,7 @@
             Already have an account?
             <a href="<c:url value='/login'/>">Login</a>
         </p>
+
     </div>
 </div>
 </body>

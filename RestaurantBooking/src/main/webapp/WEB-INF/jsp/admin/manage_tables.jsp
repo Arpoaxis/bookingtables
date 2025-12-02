@@ -108,7 +108,6 @@
                                 </span>
                             </td>
                             <td class="table-actions">
-                                <!-- Delete form -->
                                 <form action="${pageContext.request.contextPath}/admin/delete_table"
                                       method="post">
                                     <input type="hidden" name="tableId" value="${t.tableId}" />

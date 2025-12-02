@@ -7,24 +7,29 @@
     <title>Restaurant Booking</title>
     <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
+
 <body class="home-body">
 
 <jsp:include page="/WEB-INF/jsp/header.jsp"/>
 
 <div class="home-main">
 
-    <!-- Center white card -->
+    <%-- Center white card --%>
     <div class="auth-wrapper">
         <div class="auth-card">
             <h1 class="auth-title">Welcome to Restaurant Booking</h1>
 
             <c:choose>
+
+                <%-- Logged in --%>
                 <c:when test="${not empty sessionScope.email}">
                     <p class="auth-subtitle">
-                        You are logged in as <strong>${sessionScope.email}</strong>.
+                        You are logged in as
+                        <strong>${sessionScope.email}</strong>.
                     </p>
 
                     <div class="auth-actions">
+
                         <c:if test="${sessionScope.role == 'ADMIN' or sessionScope.role == 'MANAGER'}">
                             <a class="auth-primary-button" href="<c:url value='/admin/dashboard'/>">
                                 Go to Dashboard
@@ -37,6 +42,7 @@
                     </div>
                 </c:when>
 
+                <%-- Not logged in --%>
                 <c:otherwise>
                     <p class="auth-subtitle">
                         Please log in to choose a restaurant and make a booking.
@@ -52,10 +58,11 @@
                     </div>
                 </c:otherwise>
             </c:choose>
+
         </div>
     </div>
 
-    <!-- Restaurants underneath the card -->
+    <%-- Restaurants underneath the card --%>
     <div class="restaurant-list-container">
         <h2 class="restaurant-list-title">Choose a Restaurant</h2>
 
@@ -70,6 +77,7 @@
                         <h3>${r.name}</h3>
                         <p class="address">${r.address}</p>
                         <p class="desc">${r.description}</p>
+
                         <a class="view-btn"
                            href="<c:url value='/restaurant?id=${r.restaurantId}'/>">
                             View Restaurant
@@ -80,7 +88,7 @@
         </div>
     </div>
 
-</div><!-- /.home-main -->
+</div><%-- /.home-main --%>
 
 </body>
 </html>
