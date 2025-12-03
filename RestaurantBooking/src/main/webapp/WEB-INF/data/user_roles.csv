@@ -87,3 +87,14 @@ twilson48@example.com,CUSTOMER
 zadams44@example.com,CUSTOMER
 zmoore08@example.com,CUSTOMER
 zramirez38@example.com,CUSTOMER
+cgmanager1@centralgrill.com,MANAGER
+cgmanager2@centralgrill.com,MANAGER
+spmanager1@sushipalace.com,MANAGER
+spmanager2@sushipalace.com,MANAGER
+pcmanager1@pastacorner.com,MANAGER
+pcmanager2@pastacorner.com,MANAGER
+cghost1@centralgrill.com,HOST
+cghost2@centralgrill.com,HOST
+sphost1@sushipalace.com,HOST
+pchost1@pastacorner.com,HOST
+

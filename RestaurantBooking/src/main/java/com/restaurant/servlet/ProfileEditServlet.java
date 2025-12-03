@@ -2,9 +2,13 @@ package com.restaurant.servlet;
 
 import com.restaurant.dao.UserDao;
 import com.restaurant.model.User;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
@@ -14,14 +18,17 @@ public class ProfileEditServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException {
+            throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
-
         if (session == null || session.getAttribute("user") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
+
+        // Optionally, pass the user to the edit JSP
+        User user = (User) session.getAttribute("user");
+        request.setAttribute("user", user);
 
         request.getRequestDispatcher("/WEB-INF/jsp/profile/edit_profile.jsp")
                .forward(request, response);
@@ -29,51 +36,63 @@ public class ProfileEditServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException {
+            throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
-
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        User user = (User) session.getAttribute("user");
-
-        // Form values
-        String first = request.getParameter("first_name");
-        String last = request.getParameter("last_name");
-        String phoneStr = request.getParameter("phone_number");
-
-        // Validate
-        if (first == null || first.isBlank() || last == null || last.isBlank()) {
-            session.setAttribute("error", "Name fields cannot be empty.");
-            response.sendRedirect(request.getContextPath() + "/profile");
+        User sessionUser = (User) session.getAttribute("user");
+        if (sessionUser == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        long phone = user.getPhoneNumber();
-        if (phoneStr != null && !phoneStr.isBlank()) {
+        String firstName = request.getParameter("first_name");
+        String lastName  = request.getParameter("last_name");
+        String phoneStr  = request.getParameter("phoneNumber");
+
+        String errorMessage = null;
+        long phone = 0L;
+
+        // Basic validation
+        if (firstName == null || firstName.trim().isEmpty()) {
+            errorMessage = "First name is required.";
+        } else if (lastName == null || lastName.trim().isEmpty()) {
+            errorMessage = "Last name is required.";
+        } else if (phoneStr == null || phoneStr.trim().isEmpty()) {
+            errorMessage = "Phone number is required.";
+        } else {
             try {
-                phone = Long.parseLong(phoneStr.replaceAll("[^0-9]", ""));
+                phone = Long.parseLong(phoneStr.replaceAll("\\D", "")); // strip non-digits
             } catch (NumberFormatException e) {
-                session.setAttribute("error", "Invalid phone number.");
-                response.sendRedirect(request.getContextPath() + "/profile");
-                return;
+                errorMessage = "Invalid phone number.";
             }
         }
 
-        // DB update
-        String dbPath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
-        UserDao dao = new UserDao(dbPath);
+        if (errorMessage != null) {
+            request.setAttribute("error", errorMessage);
+            request.setAttribute("first_name", firstName);
+            request.setAttribute("last_name", lastName);
+            request.setAttribute("phoneNumber", phoneStr);
+            request.getRequestDispatcher("/WEB-INF/jsp/profile/edit_profile.jsp")
+                   .forward(request, response);
+            return;
+        }
 
-        boolean ok = dao.updateUserProfile(user.getUserId(), first, last, phone);
+        try {
+            UserDao userDao = new UserDao(getServletContext());
+            userDao.updateUserProfile(sessionUser.getUserId(), firstName, lastName, phone);
 
-        if (ok) {
-            User updated = dao.getUserById(user.getUserId());
-            session.setAttribute("user", updated);
+            // Reload updated user from DB
+            User updatedUser = userDao.getUserById(sessionUser.getUserId());
+            session.setAttribute("user", updatedUser);
+
             session.setAttribute("success", "Profile updated successfully.");
-        } else {
+        } catch (Exception e) {
+            e.printStackTrace();
             session.setAttribute("error", "Failed to update profile.");
         }
 

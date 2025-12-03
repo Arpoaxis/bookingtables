@@ -65,18 +65,21 @@ public class DatabaseInitializer implements ServletContextListener {
                     """);
 
                     stmt.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS users (
-                            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            username TEXT NOT NULL,
-                            first_name TEXT NOT NULL,
-                            last_name TEXT NOT NULL,
-                            email TEXT NOT NULL UNIQUE,
-                            password TEXT,
-                            phone_number TEXT NOT NULL UNIQUE,
-                            created TEXT NOT NULL DEFAULT(datetime('now')),
-                            active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1))
-                        );
-                    """);
+                    	    CREATE TABLE IF NOT EXISTS users (
+                    	        user_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+                    	        username     TEXT NOT NULL,
+                    	        first_name   TEXT NOT NULL,
+                    	        last_name    TEXT NOT NULL,
+                    	        email        TEXT NOT NULL UNIQUE,
+                    	        password     TEXT,
+                    	        phone_number TEXT NOT NULL UNIQUE,
+                    	        restaurant_id INTEGER,
+                    	        created      TEXT NOT NULL DEFAULT(datetime('now')),
+                    	        active       INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)),
+                    	        FOREIGN KEY(restaurant_id) REFERENCES restaurants(restaurant_id)
+                    	    );
+                    	""");
+
 
                     stmt.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS user_roles (
@@ -190,6 +193,8 @@ public class DatabaseInitializer implements ServletContextListener {
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);");
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_restaurant_tables_restaurant ON restaurant_tables(restaurant_id);");
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_bookings_restaurant ON bookings(restaurant_id);");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_users_restaurant ON users(restaurant_id);");
+
 
                     // ========== DEFAULT DATA ==========
                     stmt.executeUpdate("""
@@ -207,12 +212,33 @@ public class DatabaseInitializer implements ServletContextListener {
                     """);
 
                     stmt.executeUpdate("""
-                        INSERT OR IGNORE INTO users(user_id, username, first_name, last_name, email, password, phone_number, active)
-                        VALUES
-                            (1, 'admin', 'Admin', 'User', 'admin@centralgrill.com', 'admin', '1234564789', 1),
-                            (2, 'admin', 'Admin', 'User', 'admin@sushipalace.com', 'admin', '1234566789', 1),
-                            (3, 'admin', 'Admin', 'User', 'admin@pastacorner.com', 'admin', '1234556789', 1);
-                    """);
+                    	    INSERT OR IGNORE INTO users
+                    	        (user_id, username, first_name, last_name, email, password, phone_number, restaurant_id, active)
+                    	    VALUES
+                    	        (1, 'admin', 'Admin', 'User', 'admin@centralgrill.com',  'admin', '1234564789', 1, 1),
+                    	        (2, 'admin', 'Admin', 'User', 'admin@sushipalace.com',   'admin', '1234566789', 2, 1),
+                    	        (3, 'admin', 'Admin', 'User', 'admin@pastacorner.com',   'admin', '1234556789', 3, 1);
+                    	""");
+
+                    stmt.executeUpdate("""
+                    	    INSERT OR IGNORE INTO users
+                    	        (username, first_name, last_name, email, password, phone_number, restaurant_id, active)
+                    	    VALUES
+                    	        ('cg_host',  'Central', 'Host',  'host@centralgrill.com',  'password', '5550002000', 1, 1),
+                    	        ('sp_host',  'Sushi',   'Host',  'host@sushipalace.com',  'password', '5550002001', 2, 1),
+                    	        ('pc_host',  'Pasta',   'Host',  'host@pastacorner.com',  'password', '5550002002', 3, 1)
+                    	""");
+                    stmt.executeUpdate("""
+                    	    INSERT OR IGNORE INTO users_to_user_roles(user_id, role_id)
+                    	    SELECT u.user_id, r.role_id
+                    	    FROM users u
+                    	    JOIN user_roles r ON r.role_name = 'HOST'
+                    	    WHERE u.email IN (
+                    	        'host@centralgrill.com',
+                    	        'host@sushipalace.com',
+                    	        'host@pastacorner.com'
+                    	    );
+                    	""");
 
                     stmt.executeUpdate("""
                         INSERT OR IGNORE INTO users_to_user_roles(user_id, role_id)
@@ -274,8 +300,8 @@ public class DatabaseInitializer implements ServletContextListener {
 
                 String sql = """
                     INSERT OR IGNORE INTO users
-                    (username, first_name, last_name, email, password, phone_number, created, active)
-                    VALUES (?,?,?,?,?,?,?,?)
+                        (username, first_name, last_name, email, password, phone_number, restaurant_id, created, active)
+                    VALUES (?,?,?,?,?,?,?,?,?)
                 """;
 
                 try (var ps = conn.prepareStatement(sql)) {
@@ -288,14 +314,41 @@ public class DatabaseInitializer implements ServletContextListener {
                         String[] p = line.split(",", -1);
                         if (p.length < 8) continue;
 
-                        ps.setString(1, p[0].trim());
-                        ps.setString(2, p[1].trim());
-                        ps.setString(3, p[2].trim());
-                        ps.setString(4, p[3].trim().toLowerCase());
-                        ps.setString(5, p[4].trim());
-                        ps.setString(6, p[5].trim());
-                        ps.setString(7, p[6].trim());
-                        ps.setInt(8, Integer.parseInt(p[7].trim()));
+                        String username   = p[0].trim();
+                        String firstName  = p[1].trim();
+                        String lastName   = p[2].trim();
+                        String email      = p[3].trim().toLowerCase();
+                        String password   = p[4].trim();
+                        String phone      = p[5].trim();
+                        String created    = p[6].trim();
+                        int    activeFlag = Integer.parseInt(p[7].trim());
+
+                        // Infer restaurant_id from email domain
+                        Integer restaurantId = null;
+                        if (email.endsWith("@centralgrill.com")) {
+                            restaurantId = 1;
+                        } else if (email.endsWith("@sushipalace.com")) {
+                            restaurantId = 2;
+                        } else if (email.endsWith("@pastacorner.com")) {
+                            restaurantId = 3;
+                        }
+
+                        int idx = 1;
+                        ps.setString(idx++, username);
+                        ps.setString(idx++, firstName);
+                        ps.setString(idx++, lastName);
+                        ps.setString(idx++, email);
+                        ps.setString(idx++, password);
+                        ps.setString(idx++, phone);
+
+                        if (restaurantId == null) {
+                            ps.setNull(idx++, java.sql.Types.INTEGER);
+                        } else {
+                            ps.setInt(idx++, restaurantId);
+                        }
+
+                        ps.setString(idx++, created);
+                        ps.setInt(idx++, activeFlag);
 
                         ps.addBatch();
                     }
@@ -306,6 +359,7 @@ public class DatabaseInitializer implements ServletContextListener {
             }
         }
     }
+
 
     private void loadUserRolesFromCsv(ServletContext ctx, String resourcePath, String url) throws Exception {
         try (var in = ctx.getResourceAsStream(resourcePath)) {

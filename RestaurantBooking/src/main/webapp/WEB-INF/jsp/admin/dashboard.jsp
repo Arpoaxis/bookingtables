@@ -102,6 +102,13 @@
                             View floor plan (beta)
                         </a>
                     </li>
+                    <li>
+    					<a class="primary-link"
+      						href="<c:url value='/admin/employees'/>">
+        					Manage employees
+    					</a>
+					</li>
+                    
                 </ul>
 
                 <hr class="management-separator"/>
