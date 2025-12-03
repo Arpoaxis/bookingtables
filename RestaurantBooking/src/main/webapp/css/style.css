@@ -927,3 +927,9 @@ body {
 .danger-btn:hover {
     background: #b71c1c;
 }
+.back-to-dashboard-bar {
+    margin: 0 0 1rem 0;
+}
+.back-to-dashboard-bar .primary-link {
+    font-size: 0.9rem;
+}

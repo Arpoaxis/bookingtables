@@ -24,6 +24,7 @@
 	<div class="home-link">
 	    <jsp:include page="/WEB-INF/jsp/header.jsp"/>
 	  </div>
+	  <jsp:include page="/WEB-INF/jsp/admin/back_to_dashboard.jsp" />
 	<h2>Add New Table</h2>
     <form action="<%=request.getContextPath()%>/admin/add_table" method="post">
     	<input type="hidden" name="csrf_token" value="${csrfToken}" />

@@ -48,6 +48,10 @@
 			    <option value="16:00">16:00</option>
 			    <option value="17:00">17:00</option>
 			    <option value="18:00">18:00</option>
+			    <option value="19:00">19:00</option>
+			    <option value="20:00">20:00</option>
+			    <option value="21:00">21:00</option>
+			    <option value="22:00">22:00</option>
 			   
 			</select>
 
@@ -71,21 +75,20 @@
 </div>
 
 <script>
+    (function() {
+        var slider = document.getElementById('guestsSlider');
+        var output = document.getElementById('guestCount');
+        if (!slider || !output) return;
 
+        // initial sync
+        output.textContent = slider.value;
 
-const slider = document.getElementById("guestSlider");
-const guestCount = document.getElementById("guestCount");
-
-slider.addEventListener("input", () => {
-    guestCount.textContent = slider.value;
-    loadTimes(); 
-});
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const today = new Date().toISOString().split("T")[0];
-    document.getElementById("datePicker").setAttribute("min", today);
-});
+        slider.addEventListener('input', function () {
+            output.textContent = this.value;
+        });
+    })();
 </script>
+
 
 
 </body>

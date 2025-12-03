@@ -2,6 +2,7 @@ package com.restaurant.servlet;
 
 import com.restaurant.dao.UserDao;
 import com.restaurant.model.User;
+import com.restaurant.util.PasswordUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -26,7 +27,6 @@ public class ProfileEditServlet extends HttpServlet {
             return;
         }
 
-        // Optionally, pass the user to the edit JSP
         User user = (User) session.getAttribute("user");
         request.setAttribute("user", user);
 
@@ -50,6 +50,8 @@ public class ProfileEditServlet extends HttpServlet {
             return;
         }
 
+        int userId = sessionUser.getUserId();
+
         String firstName = request.getParameter("first_name");
         String lastName  = request.getParameter("last_name");
         String phoneStr  = request.getParameter("phoneNumber");
@@ -57,7 +59,7 @@ public class ProfileEditServlet extends HttpServlet {
         String errorMessage = null;
         long phone = 0L;
 
-        // Basic validation
+        // ---------- Basic profile validation ----------
         if (firstName == null || firstName.trim().isEmpty()) {
             errorMessage = "First name is required.";
         } else if (lastName == null || lastName.trim().isEmpty()) {
@@ -74,9 +76,7 @@ public class ProfileEditServlet extends HttpServlet {
 
         if (errorMessage != null) {
             request.setAttribute("error", errorMessage);
-            request.setAttribute("first_name", firstName);
-            request.setAttribute("last_name", lastName);
-            request.setAttribute("phoneNumber", phoneStr);
+            request.setAttribute("user", sessionUser);
             request.getRequestDispatcher("/WEB-INF/jsp/profile/edit_profile.jsp")
                    .forward(request, response);
             return;
@@ -84,18 +84,93 @@ public class ProfileEditServlet extends HttpServlet {
 
         try {
             UserDao userDao = new UserDao(getServletContext());
-            userDao.updateUserProfile(sessionUser.getUserId(), firstName, lastName, phone);
 
-            // Reload updated user from DB
-            User updatedUser = userDao.getUserById(sessionUser.getUserId());
+            // ---------- 1) Update basic profile info ----------
+            boolean updated = userDao.updateUserProfile(userId, firstName, lastName, phone);
+            if (!updated) {
+                request.setAttribute("error", "Failed to update profile.");
+                request.setAttribute("user", sessionUser);
+                request.getRequestDispatcher("/WEB-INF/jsp/profile/edit_profile.jsp")
+                       .forward(request, response);
+                return;
+            }
+
+            // ---------- 2) Optional password change ----------
+            String currentPassword = request.getParameter("current_password");
+            String newPassword     = request.getParameter("new_password");
+            String confirmPassword = request.getParameter("confirm_password");
+
+            boolean wantsPasswordChange =
+                    (currentPassword != null && !currentPassword.isBlank()) ||
+                    (newPassword != null && !newPassword.isBlank()) ||
+                    (confirmPassword != null && !confirmPassword.isBlank());
+
+            if (wantsPasswordChange) {
+
+                // All 3 fields must be filled
+                if (currentPassword == null || currentPassword.isBlank() ||
+                    newPassword == null   || newPassword.isBlank()   ||
+                    confirmPassword == null || confirmPassword.isBlank()) {
+
+                    request.setAttribute("error",
+                            "To change your password, fill in current, new, and confirmation fields.");
+                    request.setAttribute("user", sessionUser);
+                    request.getRequestDispatcher("/WEB-INF/jsp/profile/edit_profile.jsp")
+                           .forward(request, response);
+                    return;
+                }
+
+                if (!newPassword.equals(confirmPassword)) {
+                    request.setAttribute("error",
+                            "New password and confirmation do not match.");
+                    request.setAttribute("user", sessionUser);
+                    request.getRequestDispatcher("/WEB-INF/jsp/profile/edit_profile.jsp")
+                           .forward(request, response);
+                    return;
+                }
+
+                // Use your PasswordUtil strength rules
+                if (!PasswordUtil.isPasswordStrong(newPassword)) {
+                    request.setAttribute("error", PasswordUtil.getPasswordRequirements());
+                    request.setAttribute("user", sessionUser);
+                    request.getRequestDispatcher("/WEB-INF/jsp/profile/edit_profile.jsp")
+                           .forward(request, response);
+                    return;
+                }
+
+                // Check current password against stored hash
+                String storedHash = userDao.getPasswordForUser(userId);
+                if (storedHash == null ||
+                        !PasswordUtil.verifyPassword(currentPassword, storedHash)) {
+                    request.setAttribute("error", "Current password is incorrect.");
+                    request.setAttribute("user", sessionUser);
+                    request.getRequestDispatcher("/WEB-INF/jsp/profile/edit_profile.jsp")
+                           .forward(request, response);
+                    return;
+                }
+
+                // Hash new password and store it
+                String newHash = PasswordUtil.hashPassword(newPassword);
+                userDao.resetUserPassword(userId, newHash);
+            }
+
+            // ---------- 3) Reload user and update session ----------
+            User updatedUser = userDao.getUserById(userId);
             session.setAttribute("user", updatedUser);
 
-            session.setAttribute("success", "Profile updated successfully.");
+            String msg = wantsPasswordChange
+                    ? "Profile updated and password changed."
+                    : "Profile updated successfully.";
+            session.setAttribute("success", msg);
+
+            response.sendRedirect(request.getContextPath() + "/profile");
+
         } catch (Exception e) {
             e.printStackTrace();
-            session.setAttribute("error", "Failed to update profile.");
+            request.setAttribute("error", "Failed to update profile.");
+            request.setAttribute("user", sessionUser);
+            request.getRequestDispatcher("/WEB-INF/jsp/profile/edit_profile.jsp")
+                   .forward(request, response);
         }
-
-        response.sendRedirect(request.getContextPath() + "/profile");
     }
 }

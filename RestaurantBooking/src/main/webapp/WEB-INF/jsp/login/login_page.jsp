@@ -40,7 +40,9 @@
                     Login
                 </button>
             </form>
-
+			<div class="login-links">
+    			<a href="<c:url value='/login/forgot'/>">Forgot your password?</a>
+			</div>
             <p class="auth-footer-text">
                 Don’t have an account?
                 <a href="<c:url value='/register'/>">Register</a>

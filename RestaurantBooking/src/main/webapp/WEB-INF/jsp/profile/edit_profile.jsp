@@ -28,7 +28,8 @@
                 <div class="flash-message flash-success">${success}</div>
             </c:if>
 
-            <form action="<c:url value='/profile/save'/>" method="post" class="auth-form">
+            <!-- IMPORTANT: post back to /profile/edit -->
+            <form action="<c:url value='/profile/edit'/>" method="post" class="auth-form">
 
                 <label for="first_name">First Name</label>
                 <input type="text" name="first_name"
@@ -39,8 +40,24 @@
                        id="last_name" value="${user.lastName}" required>
 
                 <label for="phone_number">Phone Number</label>
-                <input type="tel" name="phone_number"
+                <input type="tel" name="phoneNumber"
                        id="phone_number" value="${user.phoneNumber}" required>
+
+                <hr class="profile-divider"/>
+
+                <h2>Change Password</h2>
+                <p class="form-hint">
+                    Leave these fields blank if you do not want to change your password.
+                </p>
+
+                <label for="current_password">Current Password</label>
+                <input type="password" name="current_password" id="current_password">
+
+                <label for="new_password">New Password</label>
+                <input type="password" name="new_password" id="new_password">
+
+                <label for="confirm_password">Confirm New Password</label>
+                <input type="password" name="confirm_password" id="confirm_password">
 
                 <button type="submit" class="auth-primary-button" style="width:100%;">
                     Save Changes

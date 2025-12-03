@@ -116,8 +116,23 @@ public class UserDao {
             ps.executeUpdate();
         }
     }
+    
+    public User findByEmail(String email) {
+        String sql = "SELECT * FROM users WHERE email = ?";
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-
+            ps.setString(1, email.toLowerCase());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToUser(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     // ---------- FIND EMPLOYEES FOR A RESTAURANT ----------
     public List<User> findEmployeesByRestaurant(int restaurantId) throws SQLException {
@@ -242,6 +257,27 @@ public class UserDao {
             ps.executeUpdate();
         }
     }
+    
+ // Get the stored password string for a user (currently plain text).
+    public String getPasswordForUser(int userId) {
+        String sql = "SELECT password FROM users WHERE user_id = ?";
+
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("password");
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
 
     /**
      * Update basic employee info + role.
