@@ -9,12 +9,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
 
-import com.restaurant.dao.DashboardDao;
 import com.restaurant.util.DatabaseUtility;
 
 @WebServlet("/admin/dashboard")
