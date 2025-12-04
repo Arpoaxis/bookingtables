@@ -164,5 +164,84 @@ public class BookingDao {
         return b;
     }
 
+    /**
+     * 5) GET TABLE BOOKING STATUS FOR FLOOR PLAN
+     * Returns a map of table_id -> booking status for a given date and time window.
+     * Status priority: SEATED > CONFIRMED > PENDING (if multiple bookings exist)
+     */
+    public java.util.Map<Integer, String> getTableStatusMap(int restaurantId, String date) throws SQLException {
+        java.util.Map<Integer, String> statusMap = new java.util.HashMap<>();
+
+        String sql = """
+            SELECT DISTINCT bt.table_id, b.booking_status
+            FROM bookings b
+            JOIN booking_tables bt ON b.booking_id = bt.booking_id
+            WHERE b.restaurant_id = ?
+              AND b.booking_date = ?
+              AND b.booking_status IN ('PENDING', 'CONFIRMED', 'SEATED')
+            ORDER BY bt.table_id,
+                     CASE b.booking_status
+                       WHEN 'SEATED' THEN 1
+                       WHEN 'CONFIRMED' THEN 2
+                       WHEN 'PENDING' THEN 3
+                       ELSE 4
+                     END
+        """;
+
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, restaurantId);
+            ps.setString(2, date);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int tableId = rs.getInt("table_id");
+                    String status = rs.getString("booking_status");
+
+                    if (!statusMap.containsKey(tableId)) {
+                        statusMap.put(tableId, status);
+                    }
+                }
+            }
+        }
+
+        return statusMap;
+    }
+
+    /**
+     * 6) GET BOOKING DETAILS FOR A SPECIFIC TABLE AND DATE
+     * Returns list of bookings for a table on a given date
+     */
+    public List<Booking> getBookingsForTable(int tableId, String date) throws SQLException {
+        List<Booking> result = new ArrayList<>();
+
+        String sql = """
+            SELECT b.*, u.email AS customer_email
+            FROM bookings b
+            JOIN booking_tables bt ON b.booking_id = bt.booking_id
+            JOIN users u ON b.user_id = u.user_id
+            WHERE bt.table_id = ?
+              AND b.booking_date = ?
+              AND b.booking_status <> 'CANCELLED'
+            ORDER BY b.booking_time ASC
+        """;
+
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, tableId);
+            ps.setString(2, date);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(mapRowToBooking(rs));
+                }
+            }
+        }
+
+        return result;
+    }
+
 
 }

@@ -1,5 +1,6 @@
 package com.restaurant.servlet;
 
+import com.restaurant.dao.BookingDao;
 import com.restaurant.dao.RestaurantTableDao;
 import com.restaurant.model.RestaurantTable;
 
@@ -8,9 +9,12 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet("/admin/floor_plan")
 public class FloorPlanServlet extends HttpServlet {
@@ -20,15 +24,34 @@ public class FloorPlanServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        HttpSession session = req.getSession(false);
+        Integer restaurantId = (session != null) ? (Integer) session.getAttribute("restaurantId") : null;
+
+        // Default to restaurant 1 if not set
+        if (restaurantId == null) {
+            restaurantId = 1;
+        }
+
         String dbPath = getServletContext()
                 .getRealPath("/WEB-INF/database/restBooking.db");
 
-        try {
-            RestaurantTableDao dao = new RestaurantTableDao(dbPath);
-            List<RestaurantTable> tables = dao.getAllTables();
+        // Get date parameter or use today
+        String dateParam = req.getParameter("date");
+        String selectedDate = (dateParam != null && !dateParam.isEmpty())
+                ? dateParam
+                : LocalDate.now().toString();
 
-            // For now we just show all tables as “available”
+        try {
+            RestaurantTableDao tableDao = new RestaurantTableDao(dbPath);
+            List<RestaurantTable> tables = tableDao.getAllTables();
+
+            BookingDao bookingDao = new BookingDao(getServletContext());
+            Map<Integer, String> tableStatusMap = bookingDao.getTableStatusMap(restaurantId, selectedDate);
+
             req.setAttribute("tables", tables);
+            req.setAttribute("tableStatusMap", tableStatusMap);
+            req.setAttribute("selectedDate", selectedDate);
+            req.setAttribute("restaurantId", restaurantId);
 
         } catch (Exception e) {
             e.printStackTrace();
