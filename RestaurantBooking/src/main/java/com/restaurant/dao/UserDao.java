@@ -358,5 +358,101 @@ public class UserDao {
             }
         }
     }
+ // Search customers by name / email / phone (used by staff waitlist page)
+    public List<User> searchCustomers(String query) throws SQLException {
+        String sql = """
+            SELECT DISTINCT u.*
+            FROM users u
+            LEFT JOIN users_to_user_roles ur ON u.user_id = ur.user_id
+            LEFT JOIN user_roles r          ON ur.role_id = r.role_id
+            WHERE (
+                LOWER(u.first_name)   LIKE ?
+                OR LOWER(u.last_name) LIKE ?
+                OR LOWER(u.email)     LIKE ?
+                OR u.phone_number     LIKE ?
+            )
+            -- don't show staff accounts as search results
+            AND (r.role_name IS NULL OR r.role_name = 'CUSTOMER')
+            ORDER BY u.last_name, u.first_name, u.email
+            """;
+
+        String like = "%" + query.toLowerCase() + "%";
+
+        List<User> results = new ArrayList<>();
+
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, like);
+            ps.setString(2, like);
+            ps.setString(3, like);
+            ps.setString(4, like);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    results.add(mapRowToUser(rs));
+                }
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Create a new CUSTOMER account (for when a host wants
+     * to register a walk-in as a full customer).
+     *
+     * @param firstName       required
+     * @param lastName        required
+     * @param email           required (must be unique)
+     * @param phoneNumber     optional
+     * @param hashedPassword  password hash (use PasswordUtil.hashPassword before calling)
+     */
+    public User createCustomer(String firstName,
+                               String lastName,
+                               String email,
+                               String phoneNumber,
+                               String hashedPassword) throws SQLException {
+
+        String username;
+        if (email != null && email.contains("@")) {
+            username = email.substring(0, email.indexOf('@'));
+        } else {
+            username = (firstName + "." + lastName).toLowerCase();
+        }
+
+        String insertSql = """
+            INSERT INTO users
+                (username, first_name, last_name, email, password,
+                 phone_number, restaurant_id, active)
+            VALUES (?,?,?,?,?,?,NULL,1)
+            """;
+
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+
+            int i = 1;
+            ps.setString(i++, username);
+            ps.setString(i++, firstName);
+            ps.setString(i++, lastName);
+            ps.setString(i++, email.toLowerCase());
+            ps.setString(i++, hashedPassword);
+            ps.setString(i++, phoneNumber);
+
+            ps.executeUpdate();
+
+            int newUserId;
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (!rs.next()) {
+                    throw new SQLException("Failed to get generated user_id");
+                }
+                newUserId = rs.getInt(1);
+            }
+
+            // return full user object
+            return getUserById(newUserId);
+        }
+    }
+
 
 }

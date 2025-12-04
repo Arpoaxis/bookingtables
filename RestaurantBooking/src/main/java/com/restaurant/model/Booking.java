@@ -5,6 +5,7 @@ public class Booking {
     private int bookingId;
     private int restaurantId;
     private String restaurantName;
+    private String customerEmail;
     private int guests;
     private String date;
     private String time;
@@ -19,7 +20,10 @@ public class Booking {
 
     public String getRestaurantName() { return restaurantName; }
     public void setRestaurantName(String restaurantName) { this.restaurantName = restaurantName; }
-
+    
+    public String getCustomerEmail() { return customerEmail; }
+    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    
     public int getGuests() { return guests; }
     public void setGuests(int guests) { this.guests = guests; }
 

@@ -31,11 +31,15 @@ public class DatabaseInitializer implements ServletContextListener {
             boolean reset = Boolean.parseBoolean(
                     String.valueOf(ctx.getInitParameter("resetDatabaseOnStartup"))
             );
+            
+            boolean dbExists = dbFile.exists();
 
             if (reset && dbFile.exists()) {
                 System.out.println("Reset flag TRUE → deleting DB...");
                 dbFile.delete();
+                dbExists = false;
             }
+            
 
             Class.forName("org.sqlite.JDBC");
             String url = "jdbc:sqlite:" + dbFile.getAbsolutePath();
@@ -262,16 +266,17 @@ public class DatabaseInitializer implements ServletContextListener {
             }
 
             // Load seed CSVs
-            loadUsersFromCsv(ctx, "/WEB-INF/data/users.csv", url);
-            loadUserRolesFromCsv(ctx, "/WEB-INF/data/user_roles.csv", url);
-            loadRestaurantTables(ctx, "/WEB-INF/data/restaurant_tables.csv", url);
-            loadBookings(ctx, "/WEB-INF/data/bookings.csv", url);
-            loadWaitlists(ctx, "/WEB-INF/data/waitlists.csv", url);
-            loadWaitlistTableLinks(ctx, "/WEB-INF/data/waitlist_tables_link.csv", url);
+            if (!dbExists) {
+            	loadUsersFromCsv(ctx, "/WEB-INF/data/users.csv", url);
+            	loadUserRolesFromCsv(ctx, "/WEB-INF/data/user_roles.csv", url);
+            	loadRestaurantTables(ctx, "/WEB-INF/data/restaurant_tables.csv", url);
+            	loadBookings(ctx, "/WEB-INF/data/bookings.csv", url);
+            	loadWaitlists(ctx, "/WEB-INF/data/waitlists.csv", url);
+            	loadWaitlistTableLinks(ctx, "/WEB-INF/data/waitlist_tables_link.csv", url);
 
-            System.out.println("CSV seed data loaded successfully.");
-            System.out.println("Database ready at: " + dbFile.getAbsolutePath());
-
+            	System.out.println("CSV seed data loaded successfully.");
+            	System.out.println("Database ready at: " + dbFile.getAbsolutePath());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

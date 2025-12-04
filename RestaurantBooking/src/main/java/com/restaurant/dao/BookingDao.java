@@ -5,10 +5,23 @@ import com.restaurant.util.DatabaseUtility;
 import jakarta.servlet.ServletContext;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BookingDao {
+	
+	
+	private final ServletContext servletContext;
+	
+	public BookingDao(ServletContext servletContext) {
+        this.servletContext = servletContext;
+    }
+	
+	private Connection getConn() throws SQLException {
+        return DatabaseUtility.getConnection(servletContext);
+    }
+	
 	// 1) CREATE BOOKING
     public static void createBooking(ServletContext ctx, int userId, int restaurantId,
                                      int guests, String date, String time, String requests)
@@ -72,8 +85,7 @@ public class BookingDao {
 
         return list;
     }
-    // 3) CANCEL BOOKING
-   
+ // 3) CANCEL BOOKING
     public static void cancelBooking(ServletContext ctx, int bookingId, int userId) throws Exception {
 
         String sql = """
@@ -90,4 +102,67 @@ public class BookingDao {
             ps.executeUpdate();
         }
     }
+
+    /**
+     * 4) BOOKINGS FOR A RESTAURANT ON A GIVEN DATE (for staff dashboard)
+     */
+    public List<Booking> findBookingsForDate(int restaurantId, LocalDate date) throws SQLException {
+        String sql = """
+            SELECT b.*,
+                   u.email AS customer_email
+            FROM bookings b
+            JOIN users u ON b.user_id = u.user_id
+            WHERE b.restaurant_id = ?
+              AND b.booking_date = ?
+              AND b.booking_status <> 'CANCELLED'
+            ORDER BY b.booking_time ASC, b.booking_id ASC
+        """;
+
+        List<Booking> result = new java.util.ArrayList<>();
+
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, restaurantId);
+            ps.setString(2, date.toString()); // yyyy-MM-dd
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(mapRowToBooking(rs));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Booking mapRowToBooking(ResultSet rs) throws SQLException {
+        Booking b = new Booking();
+        b.setBookingId(rs.getInt("booking_id"));
+        b.setRestaurantId(rs.getInt("restaurant_id"));
+        b.setGuests(rs.getInt("number_of_guests"));
+        b.setDate(rs.getString("booking_date"));    // yyyy-MM-dd
+        b.setTime(rs.getString("booking_time"));    // HH:mm:ss
+        b.setRequests(rs.getString("special_requests"));
+        b.setStatus(rs.getString("booking_status"));
+
+        // Optional columns – only present in some queries:
+        try {
+            String restaurantName = rs.getString("restaurant_name");
+            if (restaurantName != null) {
+                b.setRestaurantName(restaurantName);
+            }
+        } catch (SQLException ignored) {}
+
+        try {
+            String customerEmail = rs.getString("customer_email");
+            if (customerEmail != null) {
+                b.setCustomerEmail(customerEmail);
+            }
+        } catch (SQLException ignored) {}
+
+        return b;
+    }
+
+
 }
