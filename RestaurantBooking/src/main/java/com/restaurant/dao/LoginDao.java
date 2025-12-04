@@ -19,12 +19,20 @@ public class LoginDao {
             String url = "jdbc:sqlite:" + dbPath;
 
             String sql = """
-                SELECT u.user_id, u.email, u.password, u.first_name, u.last_name,
+                SELECT u.user_id,
+                       u.email,
+                       u.password,
+                       u.first_name,
+                       u.last_name,
+                       u.phone_number,
+                       u.restaurant_id,
+                       u.active,
                        COALESCE(r.role_name, 'CUSTOMER') AS role_name
                 FROM users u
                 LEFT JOIN users_to_user_roles ur ON u.user_id = ur.user_id
-                LEFT JOIN user_roles r ON ur.role_id = r.role_id
+                LEFT JOIN user_roles r          ON ur.role_id = r.role_id
                 WHERE LOWER(u.email) = LOWER(?)
+                LIMIT 1
             """;
 
             try (Connection connection = DriverManager.getConnection(url);
@@ -35,7 +43,7 @@ public class LoginDao {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         String storedPassword = rs.getString("password");
-                        String roleName = rs.getString("role_name");
+                        String roleName       = rs.getString("role_name");
 
                         boolean matches = false;
 
@@ -58,8 +66,26 @@ public class LoginDao {
                             user.setEmail(rs.getString("email"));
                             user.setFirstName(rs.getString("first_name"));
                             user.setLastName(rs.getString("last_name"));
-                            user.setPassword(null);
+                            user.setPassword(null); // never keep raw password
                             user.setAccountType(roleName != null ? roleName : "CUSTOMER");
+
+                            // Map restaurant_id if present
+                            Object restObj = rs.getObject("restaurant_id");
+                            if (restObj != null) {
+                                user.setRestaurantId(((Number) restObj).intValue());
+                            }
+
+                            // Map phone / active if you care
+                            String phoneStr = rs.getString("phone_number");
+                            if (phoneStr != null && !phoneStr.isBlank()) {
+                                try {
+                                    long phone = Long.parseLong(phoneStr.replaceAll("\\D", ""));
+                                    user.setPhoneNumber(phone);
+                                } catch (NumberFormatException ignore) {
+                                }
+                            }
+
+                            user.setActive(rs.getInt("active") == 1);
                         }
                     }
                 }
@@ -69,6 +95,6 @@ public class LoginDao {
             e.printStackTrace();
         }
 
-        return user; // null  means invalid credentials
+        return user; // null means invalid credentials
     }
 }

@@ -42,10 +42,10 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        System.out.println("[LoginServlet] authentication SUCCESS for '" 
+        System.out.println("[LoginServlet] authentication SUCCESS for '"
                 + email + "' role='" + user.getAccountType() + "'");
 
-      
+        // Never keep raw password in session
         user.setPassword(null);
 
         // Session fixation protection
@@ -59,11 +59,13 @@ public class LoginServlet extends HttpServlet {
         session.setAttribute("role", user.getAccountType());
         session.setAttribute("userId", user.getUserId());
 
-        // Assign restaurant ID for admin/managers
-        if ("ADMIN".equalsIgnoreCase(user.getAccountType())
-                || "MANAGER".equalsIgnoreCase(user.getAccountType())) {
+        // Prefer restaurant_id from DB (User model)
+        Integer restaurantId = user.getRestaurantId();
 
-            Integer restaurantId = null;
+        // Optional fallback for very old admin seeds with no restaurant_id set
+        if (restaurantId == null &&
+            ("ADMIN".equalsIgnoreCase(user.getAccountType())
+          || "MANAGER".equalsIgnoreCase(user.getAccountType()))) {
 
             if (email.endsWith("@centralgrill.com")) {
                 restaurantId = 1;
@@ -73,9 +75,14 @@ public class LoginServlet extends HttpServlet {
                 restaurantId = 3;
             }
 
+            // Also update the user object so the rest of the app sees it
             if (restaurantId != null) {
-                session.setAttribute("restaurantId", restaurantId);
+                user.setRestaurantId(restaurantId);
             }
+        }
+
+        if (restaurantId != null) {
+            session.setAttribute("restaurantId", restaurantId);
         }
 
         // Handle returnAfterLogin
@@ -87,14 +94,25 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-       
-        if ("ADMIN".equalsIgnoreCase(user.getAccountType())
-                || "MANAGER".equalsIgnoreCase(user.getAccountType())) {
+        // Final redirect by role
+        String role = user.getAccountType();
+        String ctx = request.getContextPath();
 
-            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+        if ("ADMIN".equalsIgnoreCase(role)
+                || "MANAGER".equalsIgnoreCase(role)) {
+
+            // Admin / manager → admin dashboard
+            response.sendRedirect(ctx + "/admin/dashboard");
+
+        } else if ("HOST".equalsIgnoreCase(role)
+                || "EMPLOYEE".equalsIgnoreCase(role)) {
+
+            // Staff → staff dashboard
+            response.sendRedirect(ctx + "/staff/dashboard");
 
         } else {
-            response.sendRedirect(request.getContextPath() + "/");
+            // CUSTOMER or any other role → public home
+            response.sendRedirect(ctx + "/");
         }
     }
 }
