@@ -1,60 +1,66 @@
-<web-app id="WebApp_ID" version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" 
-			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-			xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
-	<display-name>RestaurantBooking</display-name>
-	
-	<welcome-file-list>
-    <welcome-file>index</welcome-file>
-</welcome-file-list>
-	
-	<listener>
-		<listener-class>com.restaurant.listeners.DatabaseInitializer</listener-class>
-	</listener>
-	
-	<context-param>
-	    <param-name>resetDatabaseOnStartup</param-name>
-	    <param-value>false</param-value>
-	</context-param>
+<web-app id="WebApp_ID" version="6.0"
+         xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
 
-	<filter>
-  		<filter-name>EncodingFilter</filter-name>
-  		<filter-class>com.restaurant.filter.EncodingFilter</filter-class>
-  		<init-param>
-    		<param-name>encoding</param-name>
-    		<param-value>UTF-8</param-value>
-  		</init-param>
-	</filter>
+    <display-name>RestaurantBooking</display-name>
 
-	<filter-mapping>
-	    <filter-name>EncodingFilter</filter-name>
-	    <url-pattern>/jsp/*</url-pattern>
-	    <url-pattern>/admin/*</url-pattern>
-	    <url-pattern>/login</url-pattern>
-	    <url-pattern>/register</url-pattern>
-	    <url-pattern>/logout</url-pattern>
-  </filter-mapping>
-	<session-config>
-    	<session-timeout>30</session-timeout>
+    <!-- 1. context-params -->
+    <context-param>
+        <param-name>resetDatabaseOnStartup</param-name>
+        <param-value>false</param-value>
+    </context-param>
 
-    	<!-- cookie settings first -->
-    	<cookie-config>
-        	<http-only>true</http-only>
-        	<!-- secure=true for HTTPS; false is OK for local http:// dev -->
-        	<secure>false</secure>
-    	</cookie-config>
+    <!-- 2. filters -->
+    <filter>
+        <filter-name>EncodingFilter</filter-name>
+        <filter-class>com.restaurant.filter.EncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+    </filter>
 
-    	<!-- then tracking mode -->
-    	<tracking-mode>COOKIE</tracking-mode>
-	</session-config>
-	<filter>
-    	<filter-name>CSRFFilter</filter-name>
-    	<filter-class>com.restaurant.filter.CSRFFilter</filter-class>
-	</filter>
-	<filter-mapping>
-    	<filter-name>CSRFFilter</filter-name>
-    	<url-pattern>/admin/*</url-pattern>
-	</filter-mapping>
-	
-  
+    <filter>
+        <filter-name>CSRFFilter</filter-name>
+        <filter-class>com.restaurant.filter.CSRFFilter</filter-class>
+    </filter>
+
+    <!-- 3. filter-mappings -->
+    <filter-mapping>
+        <filter-name>EncodingFilter</filter-name>
+        <url-pattern>/jsp/*</url-pattern>
+        <url-pattern>/admin/*</url-pattern>
+        <url-pattern>/login</url-pattern>
+        <url-pattern>/register</url-pattern>
+        <url-pattern>/logout</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>CSRFFilter</filter-name>
+        <url-pattern>/admin/*</url-pattern>
+        <!-- if you later want CSRF on staff actions too, add /staff/* here -->
+        <!-- <url-pattern>/staff/*</url-pattern> -->
+    </filter-mapping>
+
+    <!-- 4. listener -->
+    <listener>
+        <listener-class>com.restaurant.listeners.DatabaseInitializer</listener-class>
+    </listener>
+
+    <!-- 5. session-config -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+            <secure>false</secure>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
+    </session-config>
+
+    <!-- 6. welcome files -->
+    <welcome-file-list>
+        <welcome-file>index</welcome-file>
+    </welcome-file-list>
 
 </web-app>

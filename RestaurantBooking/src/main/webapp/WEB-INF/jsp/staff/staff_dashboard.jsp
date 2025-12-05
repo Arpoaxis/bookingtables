@@ -31,10 +31,10 @@
 			</p>
 		</c:if>
 
-		<!-- 2-column layout: left = table plan, right = bookings -->
+		<!-- 2-column layout: left = table plan, right = bookings/waitlist -->
 		<div class="dashboard-grid">
 
-			<!-- LEFT: table plan (we’ll wire real floor plan in next step) -->
+			<!-- LEFT: table plan -->
 			<div>
 				<div class="dashboard-card wide-card">
 					<h2>Table plan</h2>
@@ -48,16 +48,18 @@
 				</div>
 			</div>
 
-			<!-- RIGHT: today's bookings -->
+			<!-- RIGHT: today's bookings + waitlist -->
 			<div>
-				<div class="dashboard-card wide-card">
+
+				<div class="dashboard-card wide-card bookings-card">
+
 					<div
 						style="display: flex; justify-content: space-between; align-items: center;">
 						<h2>Today’s bookings</h2>
-						<span> <c:out value="${today}" />
-						</span>
+						<span><c:out value="${today}" /></span>
 					</div>
-					<!-- Waitlist card -->
+
+					<!-- ==== WAITLIST CARD ==== -->
 					<div class="dashboard-card wide-card">
 						<h2>Waitlist</h2>
 
@@ -134,43 +136,59 @@
 						</c:if>
 					</div>
 
+					<p style="margin-top: 1rem;">
+						<a href="<c:url value='/staff/waitlist/new'/>"> Add booking /
+							walk-in </a>
+					</p>
 
-					<a href="<c:url value='/staff/waitlist/new'/>"> Add booking /
-						walk-in </a>
+					<!-- ==== BOOKINGS LIST (scrollable) ==== -->
 
 					<c:if test="${empty bookings}">
 						<p>No bookings for today yet.</p>
 					</c:if>
 
 					<c:if test="${not empty bookings}">
-						<table class="status-table">
-							<thead>
-								<tr>
-									<th>Time</th>
-									<th>Guests</th>
-									<th>Customer</th>
-									<th>Notes</th>
-									<th>Status</th>
-								</tr>
-							</thead>
-							<tbody>
-								<c:forEach var="b" items="${bookings}">
+						<div class="bookings-scroll">
+							<!-- figure out which direction each column should toggle to -->
+							<c:set var="currentSort" value="${param.sort}" />
+							<c:set var="currentDir" value="${param.dir}" />
+
+							<c:set var="timeDir"
+								value="${currentSort == 'time'     && currentDir != 'desc' ? 'desc' : 'asc'}" />
+							<c:set var="guestDir"
+								value="${currentSort == 'guests'   && currentDir != 'desc' ? 'desc' : 'asc'}" />
+							<c:set var="lastDir"
+								value="${currentSort == 'lastName' && currentDir != 'desc' ? 'desc' : 'asc'}" />
+
+							<table class="status-table booking-table">
+								<thead>
 									<tr>
-										<td><c:out value="${b.time}" /></td>
-										<td><c:out value="${b.guests}" /></td>
-										<td><c:out value="${b.customerEmail}" /></td>
-										<td><c:out value="${b.requests}" /></td>
-										<td><c:out value="${b.status}" /></td>
+										<th><a href="?sort=time&amp;dir=${timeDir}">Time</a></th>
+										<th><a href="?sort=guests&amp;dir=${guestDir}">Guests</a></th>
+										<th><a href="?sort=lastName&amp;dir=${lastDir}">Customer</a></th>
+										<th>Notes</th>
+										<th>Status</th>
 									</tr>
-								</c:forEach>
-							</tbody>
-						</table>
+								</thead>
+								<tbody>
+									<c:forEach var="b" items="${bookings}">
+										<tr>
+											<td><c:out value="${b.displayTime}" /></td>
+											<td><c:out value="${b.guests}" /></td>
+											<td><c:out value="${b.customerFullName}" /></td>
+											<td><c:out value="${b.requests}" /></td>
+											<td><c:out value="${b.status}" /></td>
+										</tr>
+									</c:forEach>
+								</tbody>
+							</table>
+						</div>
 					</c:if>
+
 				</div>
 			</div>
 
 		</div>
-
 	</div>
 
 </body>

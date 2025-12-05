@@ -189,6 +189,7 @@ public class WaitlistDao {
     /**
      * Update a waitlist entry status (e.g. WAITING → NOTIFIED / SEATED / CANCELLED).
      * If newStatus = SEATED, we stamp seated_at = now().
+     * hostId may be null (then we leave host_id unchanged).
      */
     public void updateStatus(int waitlistId, String newStatus, Integer hostId) throws SQLException {
         String sql = """
@@ -219,4 +220,5 @@ public class WaitlistDao {
             ps.executeUpdate();
         }
     }
+
 }

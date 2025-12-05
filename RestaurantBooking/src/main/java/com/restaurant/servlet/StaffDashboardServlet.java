@@ -16,76 +16,93 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Comparator;
+import java.util.Objects;
 
 @WebServlet("/staff/dashboard")
 public class StaffDashboardServlet extends HttpServlet {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			response.sendRedirect(request.getContextPath() + "/login");
+			return;
+		}
 
-        User currentUser = (User) session.getAttribute("user");
-        if (currentUser == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
+		User currentUser = (User) session.getAttribute("user");
+		if (currentUser == null) {
+			response.sendRedirect(request.getContextPath() + "/login");
+			return;
+		}
 
-        String role = (String) session.getAttribute("role");
-        if (role == null ||
-                !(role.equalsIgnoreCase("HOST")
-                        || role.equalsIgnoreCase("EMPLOYEE")
-                        || role.equalsIgnoreCase("MANAGER"))) {
-            // Not staff → no access
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
-            return;
-        }
+		String role = (String) session.getAttribute("role");
+		if (role == null || !(role.equalsIgnoreCase("HOST") || role.equalsIgnoreCase("EMPLOYEE")
+				|| role.equalsIgnoreCase("MANAGER"))) {
+			// Not staff → no access
+			response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
+			return;
+		}
 
-        Integer restaurantId = currentUser.getRestaurantId();
-        if (restaurantId == null) {
-            request.setAttribute("error", "Your account is not associated with a restaurant.");
-            request.getRequestDispatcher("/WEB-INF/jsp/error.jsp")
-                   .forward(request, response);
-            return;
-        }
+		Integer restaurantId = currentUser.getRestaurantId();
+		if (restaurantId == null) {
+			request.setAttribute("error", "Your account is not associated with a restaurant.");
+			request.getRequestDispatcher("/WEB-INF/jsp/error.jsp").forward(request, response);
+			return;
+		}
 
-        LocalDate today = LocalDate.now();
+		LocalDate today = LocalDate.now();
 
-        try {
-            // Bookings for today
-            BookingDao bookingDao = new BookingDao(getServletContext());
-            List<Booking> todaysBookings =
-                    bookingDao.findBookingsForDate(restaurantId, today);
+		try {
+			// Bookings for today
+			BookingDao bookingDao = new BookingDao(getServletContext());
+			List<Booking> todaysBookings = bookingDao.findBookingsForDate(restaurantId, today);
 
-            // Active waitlist entries
-            WaitlistDao waitlistDao = new WaitlistDao(getServletContext());
-            List<WaitlistEntry> waitlist =
-                    waitlistDao.findActiveByRestaurant(restaurantId);
+			// Active waitlist entries
+			WaitlistDao waitlistDao = new WaitlistDao(getServletContext());
+			List<WaitlistEntry> waitlist = waitlistDao.findActiveByRestaurant(restaurantId);
+			String sort = request.getParameter("sort"); // time, guests, lastName
+			String dir = request.getParameter("dir"); // asc / desc
+			boolean desc = "desc".equalsIgnoreCase(dir);
 
-            // Put things on the request
-            request.setAttribute("bookings", todaysBookings);
-            request.setAttribute("waitlist", waitlist);
-            request.setAttribute("today", today);
-            request.setAttribute("restaurantId", restaurantId);
-            request.setAttribute("user", currentUser); // handy if JSP wants it
+			Comparator<Booking> cmp = null;
 
-            // Forward to staff dashboard JSP
-            request.getRequestDispatcher("/WEB-INF/jsp/staff/staff_dashboard.jsp")
-                   .forward(request, response);
+			if ("time".equalsIgnoreCase(sort)) {
+				cmp = Comparator.comparing(Booking::getTime, Comparator.nullsLast(String::compareTo));
+			} else if ("guests".equalsIgnoreCase(sort)) {
+				cmp = Comparator.comparingInt(Booking::getGuests);
+			} else if ("lastName".equalsIgnoreCase(sort)) {
+				cmp = Comparator.comparing(b -> Objects.toString(b.getCustomerLastName(), ""),
+						String.CASE_INSENSITIVE_ORDER);
+			}
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            request.setAttribute("error", "Could not load staff dashboard data.");
-            request.getRequestDispatcher("/WEB-INF/jsp/error.jsp")
-                   .forward(request, response);
-        }
-    }
+			if (cmp != null) {
+				if (desc) {
+					cmp = cmp.reversed();
+				}
+				todaysBookings.sort(cmp);
+			}
+			// Put things on the request
+			request.setAttribute("sort", sort);
+			request.setAttribute("dir", dir);
+			request.setAttribute("bookings", todaysBookings);
+			request.setAttribute("waitlist", waitlist);
+			request.setAttribute("today", today);
+			request.setAttribute("restaurantId", restaurantId);
+			request.setAttribute("user", currentUser); // handy if JSP wants it
+
+			// Forward to staff dashboard JSP
+			request.getRequestDispatcher("/WEB-INF/jsp/staff/staff_dashboard.jsp").forward(request, response);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			request.setAttribute("error", "Could not load staff dashboard data.");
+			request.getRequestDispatcher("/WEB-INF/jsp/error.jsp").forward(request, response);
+		}
+	}
 
 }
