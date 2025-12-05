@@ -7,6 +7,7 @@ import jakarta.servlet.ServletContext;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId; 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -107,35 +108,40 @@ public class BookingDao {
 	 * 4) BOOKINGS FOR A RESTAURANT ON A GIVEN DATE (for staff dashboard)
 	 */
 	public List<Booking> findBookingsForDate(int restaurantId, LocalDate date) throws SQLException {
-		String sql = """
-				    SELECT b.*,
-				           u.email      AS customer_email,
-				           u.first_name AS customer_first_name,
-				           u.last_name  AS customer_last_name
-				    FROM bookings b
-				    LEFT JOIN users u ON b.user_id = u.user_id
-				    WHERE b.restaurant_id = ?
-				      AND b.booking_date = ?
-				      AND b.booking_status <> 'CANCELLED'
-				    ORDER BY b.booking_time ASC, b.booking_id ASC
-				""";
+	    String sql = """
+	            SELECT b.*,
+	                   u.email      AS customer_email,
+	                   u.first_name AS customer_first_name,
+	                   u.last_name  AS customer_last_name,
+	                   GROUP_CONCAT(rt.table_number, ', ') AS assigned_tables
+	            FROM bookings b
+	            LEFT JOIN users u ON b.user_id = u.user_id
+	            LEFT JOIN booking_tables bt ON b.booking_id = bt.booking_id
+	            LEFT JOIN restaurant_tables rt ON bt.table_id = rt.table_id
+	            WHERE b.restaurant_id = ?
+	              AND b.booking_date = ?
+	              AND b.booking_status <> 'CANCELLED'
+	            GROUP BY b.booking_id
+	            ORDER BY b.booking_time ASC, b.booking_id ASC
+	            """;
 
-		List<Booking> result = new ArrayList<>();
+	    List<Booking> result = new java.util.ArrayList<>();
 
-		try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+	    try (Connection conn = getConn();
+	         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-			ps.setInt(1, restaurantId);
-			ps.setString(2, date.toString()); // yyyy-MM-dd
+	        ps.setInt(1, restaurantId);
+	        ps.setString(2, date.toString());
 
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					result.add(mapRowToBooking(rs));
-				}
-			}
-		}
-
-		return result;
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                result.add(mapRowToBooking(rs));
+	            }
+	        }
+	    }
+	    return result;
 	}
+
 
 	private Booking mapRowToBooking(ResultSet rs) throws SQLException {
 		Booking b = new Booking();
@@ -178,6 +184,14 @@ public class BookingDao {
 				b.setCustomerLastName(last);
 			}
 		} catch (SQLException ignored) {
+		}
+		try {
+		    String assigned = rs.getString("assigned_tables");
+		    if (assigned != null) {
+		        b.setAssignedTables(assigned);
+		    }
+		} catch (SQLException ignored) {
+		    // column not present in some queries – that's fine
 		}
 
 		return b;
@@ -306,7 +320,7 @@ public class BookingDao {
 				String specialReqs = rs.getString("special_requests");
 
 				// 2) Decide booking date & time
-				LocalDate today = LocalDate.now();
+				LocalDate today = LocalDate.now(ZoneId.of("America/Los_Angeles"));
 
 				// round current time to nearest half-hour slot for nicer demo
 				LocalTime now = LocalTime.now().withSecond(0).withNano(0);
@@ -344,6 +358,114 @@ public class BookingDao {
 				psIns.executeUpdate();
 			}
 		}
+	}
+
+	// Get a single booking (used to check restaurant & current status)
+	public Booking getBookingById(int bookingId) throws SQLException {
+		String sql = """
+				SELECT b.*,
+				       u.email      AS customer_email,
+				       u.first_name AS customer_first_name,
+				       u.last_name  AS customer_last_name
+				FROM bookings b
+				JOIN users u ON b.user_id = u.user_id
+				WHERE b.booking_id = ?
+				""";
+
+		try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+			ps.setInt(1, bookingId);
+
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					return mapRowToBooking(rs);
+				}
+			}
+		}
+		return null;
+	}
+
+	// Update only the booking_status field
+	public void updateBookingStatus(int bookingId, String newStatus) throws SQLException {
+	    String sql = """
+	        UPDATE bookings
+	        SET booking_status = ?
+	        WHERE booking_id = ?
+	    """;
+
+	    try (Connection conn = getConn();
+	         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+	        ps.setString(1, newStatus);
+	        ps.setInt(2, bookingId);
+	        ps.executeUpdate();
+	    }
+	}
+
+	// Remove all table links for a booking
+	public void clearTablesForBooking(int bookingId) throws SQLException {
+	    String sql = "DELETE FROM booking_tables WHERE booking_id = ?";
+
+	    try (Connection conn = getConn();
+	         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+	        ps.setInt(1, bookingId);
+	        ps.executeUpdate();
+	    }
+	}
+
+	// Assign exactly ONE table to a booking (replacing any existing)
+	public void assignSingleTable(int bookingId, int tableId) throws SQLException {
+	    try (Connection conn = getConn()) {
+	        conn.setAutoCommit(false);
+	        try (PreparedStatement del =
+	                     conn.prepareStatement("DELETE FROM booking_tables WHERE booking_id = ?")) {
+	            del.setInt(1, bookingId);
+	            del.executeUpdate();
+	        }
+	        try (PreparedStatement ins =
+	                     conn.prepareStatement("INSERT INTO booking_tables (booking_id, table_id) VALUES (?, ?)")) {
+	            ins.setInt(1, bookingId);
+	            ins.setInt(2, tableId);
+	            ins.executeUpdate();
+	        }
+	        conn.commit();
+	    }
+	}
+
+	// Map: booking_id -> (one) table_id for a given date (for display / dropdowns)
+	public Map<Integer, Integer> getPrimaryTableIdMapForDate(int restaurantId,
+	                                                         LocalDate date) throws SQLException {
+	    String sql = """
+	        SELECT b.booking_id,
+	               MIN(bt.table_id) AS table_id
+	        FROM bookings b
+	        JOIN booking_tables bt ON b.booking_id = bt.booking_id
+	        WHERE b.restaurant_id = ?
+	          AND b.booking_date = ?
+	          AND b.booking_status <> 'CANCELLED'
+	        GROUP BY b.booking_id
+	    """;
+
+	    Map<Integer, Integer> map = new HashMap<>();
+
+	    try (Connection conn = getConn();
+	         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+	        ps.setInt(1, restaurantId);
+	        ps.setString(2, date.toString());
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                int bookingId = rs.getInt("booking_id");
+	                int tableId   = rs.getInt("table_id");
+	                if (!rs.wasNull()) {
+	                    map.put(bookingId, tableId);
+	                }
+	            }
+	        }
+	    }
+	    return map;
 	}
 
 }

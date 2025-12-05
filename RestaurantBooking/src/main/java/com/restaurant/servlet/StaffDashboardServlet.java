@@ -1,9 +1,11 @@
 package com.restaurant.servlet;
 
 import com.restaurant.dao.BookingDao;
-import com.restaurant.model.Booking;
-import com.restaurant.model.User;
+import com.restaurant.dao.RestaurantTableDao;
 import com.restaurant.dao.WaitlistDao;
+import com.restaurant.model.Booking;
+import com.restaurant.model.RestaurantTable;
+import com.restaurant.model.User;
 import com.restaurant.model.WaitlistEntry;
 
 import jakarta.servlet.ServletException;
@@ -15,8 +17,10 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.List;
+import java.time.ZoneId;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @WebServlet("/staff/dashboard")
@@ -29,7 +33,7 @@ public class StaffDashboardServlet extends HttpServlet {
 			throws ServletException, IOException {
 
 		HttpSession session = request.getSession(false);
-		if (session == null) {
+		if (session == null || session.getAttribute("user") == null) {
 			response.sendRedirect(request.getContextPath() + "/login");
 			return;
 		}
@@ -42,35 +46,35 @@ public class StaffDashboardServlet extends HttpServlet {
 
 		String role = (String) session.getAttribute("role");
 		if (role == null || !(role.equalsIgnoreCase("HOST") || role.equalsIgnoreCase("EMPLOYEE")
-				|| role.equalsIgnoreCase("MANAGER"))) {
-			// Not staff → no access
-			response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
+				|| role.equalsIgnoreCase("MANAGER") || role.equalsIgnoreCase("ADMIN"))) {
+			response.sendError(HttpServletResponse.SC_FORBIDDEN);
 			return;
 		}
 
-		Integer restaurantId = currentUser.getRestaurantId();
+		Integer restaurantId = (Integer) session.getAttribute("restaurantId");
 		if (restaurantId == null) {
-			request.setAttribute("error", "Your account is not associated with a restaurant.");
+			request.setAttribute("error", "You are not associated with a restaurant.");
 			request.getRequestDispatcher("/WEB-INF/jsp/error.jsp").forward(request, response);
 			return;
 		}
 
-		LocalDate today = LocalDate.now();
+		// Today in PST
+		LocalDate today = LocalDate.now(ZoneId.of("America/Los_Angeles"));
+		String todayStr = today.toString();
+		request.setAttribute("today", todayStr);
 
 		try {
-			// Bookings for today
 			BookingDao bookingDao = new BookingDao(getServletContext());
+			WaitlistDao waitlistDao = new WaitlistDao(getServletContext());
+
+			// ---- BOOKINGS FOR TODAY ----
 			List<Booking> todaysBookings = bookingDao.findBookingsForDate(restaurantId, today);
 
-			// Active waitlist entries
-			WaitlistDao waitlistDao = new WaitlistDao(getServletContext());
-			List<WaitlistEntry> waitlist = waitlistDao.findActiveByRestaurant(restaurantId);
 			String sort = request.getParameter("sort"); // time, guests, lastName
 			String dir = request.getParameter("dir"); // asc / desc
 			boolean desc = "desc".equalsIgnoreCase(dir);
 
 			Comparator<Booking> cmp = null;
-
 			if ("time".equalsIgnoreCase(sort)) {
 				cmp = Comparator.comparing(Booking::getTime, Comparator.nullsLast(String::compareTo));
 			} else if ("guests".equalsIgnoreCase(sort)) {
@@ -79,23 +83,41 @@ public class StaffDashboardServlet extends HttpServlet {
 				cmp = Comparator.comparing(b -> Objects.toString(b.getCustomerLastName(), ""),
 						String.CASE_INSENSITIVE_ORDER);
 			}
-
 			if (cmp != null) {
 				if (desc) {
 					cmp = cmp.reversed();
 				}
 				todaysBookings.sort(cmp);
 			}
-			// Put things on the request
+
+			// ---- ACTIVE WAITLIST ----
+			List<WaitlistEntry> waitlist = waitlistDao.findActiveByRestaurant(restaurantId);
+
+			// ---- FLOOR PLAN DATA (for embedded plan) ----
+			String dbPath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
+			RestaurantTableDao tableDao = new RestaurantTableDao(dbPath);
+			List<RestaurantTable> tables = tableDao.getAllTables();
+
+			// per-table status for colouring the plan
+			Map<Integer, String> tableStatusMap = bookingDao.getTableStatusMap(restaurantId, todayStr);
+
+			// NEW: booking -> (one) table mapping, for the dropdown/drag UI
+			Map<Integer, Integer> bookingTableMap = bookingDao.getPrimaryTableIdMapForDate(restaurantId, today);
+
+			// Put things on the request for the JSP
 			request.setAttribute("sort", sort);
 			request.setAttribute("dir", dir);
 			request.setAttribute("bookings", todaysBookings);
 			request.setAttribute("waitlist", waitlist);
-			request.setAttribute("today", today);
 			request.setAttribute("restaurantId", restaurantId);
-			request.setAttribute("user", currentUser); // handy if JSP wants it
+			request.setAttribute("user", currentUser);
 
-			// Forward to staff dashboard JSP
+			// floorplan attributes (reused by mini plan AND table dropdowns)
+			request.setAttribute("tables", tables);
+			request.setAttribute("allTables", tables); // convenience alias
+			request.setAttribute("tableStatusMap", tableStatusMap);
+			request.setAttribute("bookingTableMap", bookingTableMap);
+
 			request.getRequestDispatcher("/WEB-INF/jsp/staff/staff_dashboard.jsp").forward(request, response);
 
 		} catch (Exception e) {
@@ -103,6 +125,6 @@ public class StaffDashboardServlet extends HttpServlet {
 			request.setAttribute("error", "Could not load staff dashboard data.");
 			request.getRequestDispatcher("/WEB-INF/jsp/error.jsp").forward(request, response);
 		}
-	}
 
+	}
 }

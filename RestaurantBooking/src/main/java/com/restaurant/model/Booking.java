@@ -13,6 +13,7 @@ public class Booking {
 	private String time;
 	private String requests;
 	private String status;
+	private String assignedTables;
 
 	public int getBookingId() {
 		return bookingId;
@@ -100,6 +101,14 @@ public class Booking {
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+
+	public String getAssignedTables() {
+		return assignedTables;
+	}
+
+	public void setAssignedTables(String assignedTables) {
+		this.assignedTables = assignedTables;
 	}
 
 	public String getCustomerFullName() {

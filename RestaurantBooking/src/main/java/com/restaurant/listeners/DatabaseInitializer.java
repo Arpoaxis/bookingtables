@@ -604,207 +604,207 @@ public class DatabaseInitializer implements ServletContextListener {
     }
 
 
-    private void loadWaitlists(ServletContext ctx, String resourcePath, String url) throws Exception {
-        try (var in = ctx.getResourceAsStream(resourcePath)) {
-
-            if (in == null) {
-                System.out.println("No CSV: " + resourcePath);
-                return;
-            }
-
-            try (var br = new java.io.BufferedReader(new java.io.InputStreamReader(in));
-                 var conn = DriverManager.getConnection(url)) {
-
-                conn.setAutoCommit(false);
-
-                String findUser = "SELECT user_id FROM users WHERE email=?";
-
-                // FIXED: **13 placeholders** matching 13 columns
-                String insertWL = """
-                    INSERT INTO waitlists(
-                        restaurant_id,
-                        user_id,
-                        customer_name,
-                        customer_phone_number,
-                        party_size,
-                        queue_position,
-                        status,
-                        estimated_wait_time,
-                        arrived_at,
-                        seated_at,
-                        host_id,
-                        special_requests,
-                        created
-                    )
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-                """;
-
-                try (var psFind = conn.prepareStatement(findUser);
-                     var psIns = conn.prepareStatement(insertWL)) {
-
-                    String line;
-                    boolean header = false;
-
-                    while ((line = br.readLine()) != null) {
-                        if (!header) { header = true; continue; }
-
-                        String[] p = line.split(",", -1);
-                        if (p.length < 12) continue;
-
-                        String custEmail = p[0].trim().toLowerCase();
-                        String custName = p[1].trim();
-                        String custPhone = p[2].trim();
-                        int party = Integer.parseInt(p[3].trim());
-                        String posStr = p[4].trim();
-                        Integer queuePos = posStr.isEmpty() ? null : Integer.valueOf(posStr);
-                        String status = p[5].trim();
-                        String estWait = p[6].trim();
-                        String arrivedAt = p[7].trim();
-                        String seatedAt = p[8].trim();
-                        String hostEmail = p[9].trim().toLowerCase();
-                        String requests = p[10].trim();
-                        String created = p[11].trim();
-
-                        Integer userId = null, hostId = null;
-
-                        if (!custEmail.isEmpty()) {
-                            psFind.setString(1, custEmail);
-                            try (var rs = psFind.executeQuery()) {
-                                if (rs.next()) userId = rs.getInt(1);
-                            }
-                        }
-
-                        if (!hostEmail.isEmpty()) {
-                            psFind.setString(1, hostEmail);
-                            try (var rs = psFind.executeQuery()) {
-                                if (rs.next()) hostId = rs.getInt(1);
-                            }
-                        }
-
-                        int idx = 1;
-                        psIns.setInt(idx++, 1); // restaurant_id default
-
-                        if (userId == null) psIns.setNull(idx++, java.sql.Types.INTEGER);
-                        else psIns.setInt(idx++, userId);
-
-                        psIns.setString(idx++, custName);
-                        psIns.setString(idx++, custPhone);
-                        psIns.setInt(idx++, party);
-
-                        if (queuePos == null) psIns.setNull(idx++, java.sql.Types.INTEGER);
-                        else psIns.setInt(idx++, queuePos);
-
-                        psIns.setString(idx++, status);
-                        psIns.setString(idx++, estWait);
-                        psIns.setString(idx++, arrivedAt);
-
-                        if (seatedAt.isEmpty()) psIns.setNull(idx++, java.sql.Types.VARCHAR);
-                        else psIns.setString(idx++, seatedAt);
-
-                        if (hostId == null) psIns.setNull(idx++, java.sql.Types.INTEGER);
-                        else psIns.setInt(idx++, hostId);
-
-                        psIns.setString(idx++, requests);
-                        psIns.setString(idx++, created);
-
-                        psIns.executeUpdate();
-                    }
-
-                    conn.commit();
-                }
-            }
-        }
-    }
-
-
-    private void loadWaitlistTableLinks(ServletContext ctx, String resourcePath, String url) throws Exception {
-        try (var in = ctx.getResourceAsStream(resourcePath)) {
-
-            if (in == null) {
-                System.out.println("No CSV: " + resourcePath);
-                return;
-            }
-
-            try (var br = new java.io.BufferedReader(new java.io.InputStreamReader(in));
-                 var conn = DriverManager.getConnection(url)) {
-
-                conn.setAutoCommit(false);
-
-                String findHost = "SELECT user_id FROM users WHERE email=?";
-                String findWait = """
-                    SELECT waitlist_id FROM waitlists
-                    WHERE arrived_at=? AND ( (? IS NULL AND host_id IS NULL) OR host_id=? )
-                    LIMIT 1
-                """;
-                String findTable = "SELECT table_id FROM restaurant_tables WHERE table_number=?";
-                String insertWT = """
-                    INSERT OR IGNORE INTO waitlist_tables(waitlist_id, table_id)
-                    VALUES (?,?)
-                """;
-
-                try (var psHost = conn.prepareStatement(findHost);
-                     var psWait = conn.prepareStatement(findWait);
-                     var psTable = conn.prepareStatement(findTable);
-                     var psIns = conn.prepareStatement(insertWT)) {
-
-                    String line;
-                    boolean header = false;
-
-                    while ((line = br.readLine()) != null) {
-                        if (!header) { header = true; continue; }
-
-                        String[] p = line.split(",", -1);
-                        if (p.length < 3) continue;
-
-                        String arrivedAt = p[0].trim();
-                        String hostEmail = p[1].trim().toLowerCase();
-                        int tableNumber = Integer.parseInt(p[2].trim());
-
-                        Integer hostId = null;
-
-                        if (!hostEmail.isEmpty()) {
-                            psHost.setString(1, hostEmail);
-                            try (var rs = psHost.executeQuery()) {
-                                if (rs.next()) hostId = rs.getInt(1);
-                            }
-                        }
-
-                        psWait.setString(1, arrivedAt);
-
-                        if (hostId == null) {
-                            psWait.setNull(2, java.sql.Types.INTEGER);
-                            psWait.setNull(3, java.sql.Types.INTEGER);
-                        } else {
-                            psWait.setInt(2, hostId);
-                            psWait.setInt(3, hostId);
-                        }
-
-                        Integer waitlistId = null;
-                        try (var rs = psWait.executeQuery()) {
-                            if (rs.next()) waitlistId = rs.getInt(1);
-                        }
-
-                        if (waitlistId == null) continue;
-
-                        Integer tableId = null;
-                        psTable.setInt(1, tableNumber);
-
-                        try (var rs = psTable.executeQuery()) {
-                            if (rs.next()) tableId = rs.getInt(1);
-                        }
-
-                        if (tableId == null) continue;
-
-                        psIns.setInt(1, waitlistId);
-                        psIns.setInt(2, tableId);
-                        psIns.executeUpdate();
-                    }
-
-                    conn.commit();
-                }
-            }
-        }
-    }
+//    private void loadWaitlists(ServletContext ctx, String resourcePath, String url) throws Exception {
+//        try (var in = ctx.getResourceAsStream(resourcePath)) {
+//
+//            if (in == null) {
+//                System.out.println("No CSV: " + resourcePath);
+//                return;
+//            }
+//
+//            try (var br = new java.io.BufferedReader(new java.io.InputStreamReader(in));
+//                 var conn = DriverManager.getConnection(url)) {
+//
+//                conn.setAutoCommit(false);
+//
+//                String findUser = "SELECT user_id FROM users WHERE email=?";
+//
+//                // FIXED: **13 placeholders** matching 13 columns
+//                String insertWL = """
+//                    INSERT INTO waitlists(
+//                        restaurant_id,
+//                        user_id,
+//                        customer_name,
+//                        customer_phone_number,
+//                        party_size,
+//                        queue_position,
+//                        status,
+//                        estimated_wait_time,
+//                        arrived_at,
+//                        seated_at,
+//                        host_id,
+//                        special_requests,
+//                        created
+//                    )
+//                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+//                """;
+//
+//                try (var psFind = conn.prepareStatement(findUser);
+//                     var psIns = conn.prepareStatement(insertWL)) {
+//
+//                    String line;
+//                    boolean header = false;
+//
+//                    while ((line = br.readLine()) != null) {
+//                        if (!header) { header = true; continue; }
+//
+//                        String[] p = line.split(",", -1);
+//                        if (p.length < 12) continue;
+//
+//                        String custEmail = p[0].trim().toLowerCase();
+//                        String custName = p[1].trim();
+//                        String custPhone = p[2].trim();
+//                        int party = Integer.parseInt(p[3].trim());
+//                        String posStr = p[4].trim();
+//                        Integer queuePos = posStr.isEmpty() ? null : Integer.valueOf(posStr);
+//                        String status = p[5].trim();
+//                        String estWait = p[6].trim();
+//                        String arrivedAt = p[7].trim();
+//                        String seatedAt = p[8].trim();
+//                        String hostEmail = p[9].trim().toLowerCase();
+//                        String requests = p[10].trim();
+//                        String created = p[11].trim();
+//
+//                        Integer userId = null, hostId = null;
+//
+//                        if (!custEmail.isEmpty()) {
+//                            psFind.setString(1, custEmail);
+//                            try (var rs = psFind.executeQuery()) {
+//                                if (rs.next()) userId = rs.getInt(1);
+//                            }
+//                        }
+//
+//                        if (!hostEmail.isEmpty()) {
+//                            psFind.setString(1, hostEmail);
+//                            try (var rs = psFind.executeQuery()) {
+//                                if (rs.next()) hostId = rs.getInt(1);
+//                            }
+//                        }
+//
+//                        int idx = 1;
+//                        psIns.setInt(idx++, 1); // restaurant_id default
+//
+//                        if (userId == null) psIns.setNull(idx++, java.sql.Types.INTEGER);
+//                        else psIns.setInt(idx++, userId);
+//
+//                        psIns.setString(idx++, custName);
+//                        psIns.setString(idx++, custPhone);
+//                        psIns.setInt(idx++, party);
+//
+//                        if (queuePos == null) psIns.setNull(idx++, java.sql.Types.INTEGER);
+//                        else psIns.setInt(idx++, queuePos);
+//
+//                        psIns.setString(idx++, status);
+//                        psIns.setString(idx++, estWait);
+//                        psIns.setString(idx++, arrivedAt);
+//
+//                        if (seatedAt.isEmpty()) psIns.setNull(idx++, java.sql.Types.VARCHAR);
+//                        else psIns.setString(idx++, seatedAt);
+//
+//                        if (hostId == null) psIns.setNull(idx++, java.sql.Types.INTEGER);
+//                        else psIns.setInt(idx++, hostId);
+//
+//                        psIns.setString(idx++, requests);
+//                        psIns.setString(idx++, created);
+//
+//                        psIns.executeUpdate();
+//                    }
+//
+//                    conn.commit();
+//                }
+//            }
+//        }
+//    }
+//
+//
+//    private void loadWaitlistTableLinks(ServletContext ctx, String resourcePath, String url) throws Exception {
+//        try (var in = ctx.getResourceAsStream(resourcePath)) {
+//
+//            if (in == null) {
+//                System.out.println("No CSV: " + resourcePath);
+//                return;
+//            }
+//
+//            try (var br = new java.io.BufferedReader(new java.io.InputStreamReader(in));
+//                 var conn = DriverManager.getConnection(url)) {
+//
+//                conn.setAutoCommit(false);
+//
+//                String findHost = "SELECT user_id FROM users WHERE email=?";
+//                String findWait = """
+//                    SELECT waitlist_id FROM waitlists
+//                    WHERE arrived_at=? AND ( (? IS NULL AND host_id IS NULL) OR host_id=? )
+//                    LIMIT 1
+//                """;
+//                String findTable = "SELECT table_id FROM restaurant_tables WHERE table_number=?";
+//                String insertWT = """
+//                    INSERT OR IGNORE INTO waitlist_tables(waitlist_id, table_id)
+//                    VALUES (?,?)
+//                """;
+//
+//                try (var psHost = conn.prepareStatement(findHost);
+//                     var psWait = conn.prepareStatement(findWait);
+//                     var psTable = conn.prepareStatement(findTable);
+//                     var psIns = conn.prepareStatement(insertWT)) {
+//
+//                    String line;
+//                    boolean header = false;
+//
+//                    while ((line = br.readLine()) != null) {
+//                        if (!header) { header = true; continue; }
+//
+//                        String[] p = line.split(",", -1);
+//                        if (p.length < 3) continue;
+//
+//                        String arrivedAt = p[0].trim();
+//                        String hostEmail = p[1].trim().toLowerCase();
+//                        int tableNumber = Integer.parseInt(p[2].trim());
+//
+//                        Integer hostId = null;
+//
+//                        if (!hostEmail.isEmpty()) {
+//                            psHost.setString(1, hostEmail);
+//                            try (var rs = psHost.executeQuery()) {
+//                                if (rs.next()) hostId = rs.getInt(1);
+//                            }
+//                        }
+//
+//                        psWait.setString(1, arrivedAt);
+//
+//                        if (hostId == null) {
+//                            psWait.setNull(2, java.sql.Types.INTEGER);
+//                            psWait.setNull(3, java.sql.Types.INTEGER);
+//                        } else {
+//                            psWait.setInt(2, hostId);
+//                            psWait.setInt(3, hostId);
+//                        }
+//
+//                        Integer waitlistId = null;
+//                        try (var rs = psWait.executeQuery()) {
+//                            if (rs.next()) waitlistId = rs.getInt(1);
+//                        }
+//
+//                        if (waitlistId == null) continue;
+//
+//                        Integer tableId = null;
+//                        psTable.setInt(1, tableNumber);
+//
+//                        try (var rs = psTable.executeQuery()) {
+//                            if (rs.next()) tableId = rs.getInt(1);
+//                        }
+//
+//                        if (tableId == null) continue;
+//
+//                        psIns.setInt(1, waitlistId);
+//                        psIns.setInt(2, tableId);
+//                        psIns.executeUpdate();
+//                    }
+//
+//                    conn.commit();
+//                }
+//            }
+//        }
+//    }
     private void seedPresentationBookings(String url) throws Exception {
         // We only call this when the DB is first created (dbExists == false)
         System.out.println("Seeding extra demo bookings for presentation…");

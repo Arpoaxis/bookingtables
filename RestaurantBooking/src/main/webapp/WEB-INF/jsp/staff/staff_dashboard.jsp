@@ -1,5 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core"%>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions"%>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -31,26 +33,112 @@
 			</p>
 		</c:if>
 
-		<!-- 2-column layout: left = table plan, right = bookings/waitlist -->
+		<!-- 2-column layout: left = floor plan, right = waitlist/bookings -->
 		<div class="dashboard-grid">
 
-			<!-- LEFT: table plan -->
+			<!-- LEFT: compact floor plan -->
 			<div>
 				<div class="dashboard-card wide-card">
-					<h2>Table plan</h2>
-					<p>A visual table plan will be embedded here so hosts can see
-						which tables are free/occupied.</p>
-					<p>
-						For now you can open the existing floor plan page: <a
-							class="primary-link" href="<c:url value='/admin/floor_plan'/>">
-							View floor plan </a>
-					</p>
+					<div class="dashboard-card-header-row">
+						<div>
+							<h2>Table plan</h2>
+							<p class="dashboard-subtitle">Quick view of tonight’s tables.
+								Click a table or open the full view for details.</p>
+						</div>
+						<a class="primary-link" href="<c:url value='/admin/floor_plan'/>">
+							Open full view </a>
+					</div>
+
+					<!-- Mini room layout -->
+					<div class="floorplan-mini-room floorplan-room">
+
+						<!-- BAR ROW -->
+						<div class="floor-row">
+							<div class="floor-row-label">Bar seating (1-seat)</div>
+							<div class="floor-row-tables">
+								<c:forEach var="t" items="${tables}">
+									<c:if test="${t.maxCapacity == 1}">
+										<c:set var="status" value="${tableStatusMap[t.tableId]}" />
+										<c:set var="statusClass"
+											value="${status != null ? fn:toLowerCase(status) : 'available'}" />
+										<div
+											class="table-node table-interactive status-${statusClass}"
+											data-table-id="${t.tableId}"
+											data-table-number="${t.tableNumber}"
+											title="Table ${t.tableNumber} (${t.minCapacity}-${t.maxCapacity})"
+											onclick="window.location.href='<c:url value="/admin/floor_plan"/>';">
+											<div class="table-node-number">T${t.tableNumber}</div>
+											<div class="table-node-cap">${t.minCapacity}&ndash;${t.maxCapacity}</div>
+											<c:if test="${status != null}">
+												<div class="table-node-status">${status}</div>
+											</c:if>
+										</div>
+									</c:if>
+								</c:forEach>
+							</div>
+						</div>
+
+						<div class="floor-aisle">Main aisle</div>
+
+						<!-- MAIN DINING ROW -->
+						<div class="floor-row">
+							<div class="floor-row-label">Main dining (4+ seats)</div>
+							<div class="floor-row-tables">
+								<c:forEach var="t" items="${tables}">
+									<c:if test="${t.maxCapacity ge 4}">
+										<c:set var="status" value="${tableStatusMap[t.tableId]}" />
+										<c:set var="statusClass"
+											value="${status != null ? fn:toLowerCase(status) : 'available'}" />
+										<div
+											class="table-node table-interactive status-${statusClass}"
+											data-table-id="${t.tableId}"
+											data-table-number="${t.tableNumber}"
+											title="Table ${t.tableNumber} (${t.minCapacity}-${t.maxCapacity})"
+											onclick="window.location.href='<c:url value="/admin/floor_plan"/>';">
+											<div class="table-node-number">T${t.tableNumber}</div>
+											<div class="table-node-cap">${t.minCapacity}&ndash;${t.maxCapacity}</div>
+											<c:if test="${status != null}">
+												<div class="table-node-status">${status}</div>
+											</c:if>
+										</div>
+									</c:if>
+								</c:forEach>
+							</div>
+						</div>
+
+						<!-- WINDOW ROW -->
+						<div class="floor-row">
+							<div class="floor-row-label">Window seating (2–3 seats)</div>
+							<div class="floor-row-tables">
+								<c:forEach var="t" items="${tables}">
+									<c:if test="${t.maxCapacity ge 2 && t.maxCapacity le 3}">
+										<c:set var="status" value="${tableStatusMap[t.tableId]}" />
+										<c:set var="statusClass"
+											value="${status != null ? fn:toLowerCase(status) : 'available'}" />
+										<div
+											class="table-node table-interactive status-${statusClass}"
+											data-table-id="${t.tableId}"
+											data-table-number="${t.tableNumber}"
+											title="Table ${t.tableNumber} (${t.minCapacity}-${t.maxCapacity})"
+											onclick="window.location.href='<c:url value="/admin/floor_plan"/>';">
+											<div class="table-node-number">T${t.tableNumber}</div>
+											<div class="table-node-cap">${t.minCapacity}&ndash;${t.maxCapacity}</div>
+											<c:if test="${status != null}">
+												<div class="table-node-status">${status}</div>
+											</c:if>
+										</div>
+									</c:if>
+								</c:forEach>
+							</div>
+						</div>
+
+						<div class="floor-back-wall">Kitchen / service area</div>
+					</div>
 				</div>
 			</div>
 
-			<!-- RIGHT: today's bookings + waitlist -->
+			<!-- RIGHT: waitlist + bookings -->
 			<div>
-
 				<div class="dashboard-card wide-card bookings-card">
 
 					<div
@@ -59,7 +147,7 @@
 						<span><c:out value="${today}" /></span>
 					</div>
 
-					<!-- ==== WAITLIST CARD ==== -->
+					<!-- WAITLIST -->
 					<div class="dashboard-card wide-card">
 						<h2>Waitlist</h2>
 
@@ -99,7 +187,11 @@
 											<td><c:out value="${w.queuePosition}" /></td>
 											<td><c:out value="${w.customerName}" /></td>
 											<td><c:out value="${w.partySize}" /></td>
-											<td><c:out value="${w.arrivedAt}" /></td>
+											<td><c:if test="${not empty w.arrivedAt}">
+													<fmt:parseDate value="${w.arrivedAt}"
+														pattern="yyyy-MM-dd HH:mm:ss" var="arrivedDt" />
+													<fmt:formatDate value="${arrivedDt}" pattern="h:mm a" />
+												</c:if></td>
 											<td><c:out value="${w.status}" /></td>
 											<td>
 												<form method="post"
@@ -137,16 +229,11 @@
 					</div>
 
 					<p style="margin-top: 1rem;">
-						<a href="<c:url value='/staff/waitlist/new'/>"> Add booking /
-							walk-in </a>
+						<a href="<c:url value='/staff/waitlist/new'/>">Add booking /
+							walk-in</a>
 					</p>
 
-					<!-- ==== BOOKINGS LIST (scrollable) ==== -->
-
-					<c:if test="${empty bookings}">
-						<p>No bookings for today yet.</p>
-					</c:if>
-
+					<!-- BOOKINGS LIST (scrollable) -->
 					<c:if test="${not empty bookings}">
 						<div class="bookings-scroll">
 							<!-- figure out which direction each column should toggle to -->
@@ -166,18 +253,66 @@
 										<th><a href="?sort=time&amp;dir=${timeDir}">Time</a></th>
 										<th><a href="?sort=guests&amp;dir=${guestDir}">Guests</a></th>
 										<th><a href="?sort=lastName&amp;dir=${lastDir}">Customer</a></th>
+										<th>Table</th>
 										<th>Notes</th>
 										<th>Status</th>
+										<th>Actions</th>
 									</tr>
 								</thead>
 								<tbody>
 									<c:forEach var="b" items="${bookings}">
-										<tr>
+										<tr class="booking-row" data-booking-id="${b.bookingId}">
 											<td><c:out value="${b.displayTime}" /></td>
 											<td><c:out value="${b.guests}" /></td>
 											<td><c:out value="${b.customerFullName}" /></td>
+
+											<!-- Table assignment dropdown -->
+											<td><c:set var="assignedTableId"
+													value="${bookingTableMap[b.bookingId]}" />
+												<form method="post"
+													action="<c:url value='/staff/bookings'/>"
+													class="inline-form">
+													<input type="hidden" name="csrf_token"
+														value="${sessionScope.csrf_token}" /> <input
+														type="hidden" name="bookingId" value="${b.bookingId}" />
+
+													<select name="tableId">
+														<option value="">-- none --</option>
+														<c:forEach var="t" items="${allTables}">
+															<option value="${t.tableId}"
+																<c:if test="${assignedTableId != null && assignedTableId == t.tableId}">
+                                                selected
+                                            </c:if>>
+																T${t.tableNumber} (${t.minCapacity}-${t.maxCapacity})</option>
+														</c:forEach>
+													</select>
+
+													<button type="submit" name="action" value="assignTable"
+														class="btn btn-small">Assign</button>
+												</form></td>
+
 											<td><c:out value="${b.requests}" /></td>
 											<td><c:out value="${b.status}" /></td>
+
+											<!-- Status buttons -->
+											<td>
+												<form method="post"
+													action="<c:url value='/staff/bookings'/>"
+													class="inline-form">
+													<input type="hidden" name="csrf_token"
+														value="${sessionScope.csrf_token}" /> <input
+														type="hidden" name="bookingId" value="${b.bookingId}" />
+
+													<button type="submit" name="action" value="confirm"
+														class="btn btn-small">Confirm</button>
+													<button type="submit" name="action" value="seat"
+														class="btn btn-small">Seat</button>
+													<button type="submit" name="action" value="complete"
+														class="btn btn-small">Complete</button>
+													<button type="submit" name="action" value="cancel"
+														class="btn btn-small danger-btn">Cancel</button>
+												</form>
+											</td>
 										</tr>
 									</c:forEach>
 								</tbody>
@@ -185,11 +320,69 @@
 						</div>
 					</c:if>
 
+
 				</div>
 			</div>
 
 		</div>
 	</div>
+	<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // Make booking rows draggable
+        document.querySelectorAll(".booking-row").forEach(function (row) {
+            row.setAttribute("draggable", "true");
+            row.addEventListener("dragstart", function (e) {
+                e.dataTransfer.setData("text/plain", row.dataset.bookingId);
+                e.dataTransfer.effectAllowed = "move";
+            });
+        });
+
+        // Make each table circle a drop target
+        document.querySelectorAll(".table-node").forEach(function (node) {
+
+            node.addEventListener("dragover", function (e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+            });
+
+            node.addEventListener("drop", function (e) {
+                e.preventDefault();
+
+                var bookingId = e.dataTransfer.getData("text/plain");
+                var tableId   = node.dataset.tableId;
+
+                if (!bookingId || !tableId) {
+                    return;
+                }
+
+                fetch("<c:url value='/staff/bookings'/>", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body:
+                        "action=assignTable" +
+                        "&bookingId=" + encodeURIComponent(bookingId) +
+                        "&tableId="   + encodeURIComponent(tableId) +
+                        "&csrf_token=" + encodeURIComponent("${sessionScope.csrf_token}")
+                }).then(function (resp) {
+                    if (resp.ok) {
+                        // reload so colours / table numbers update
+                        window.location.reload();
+                    } else {
+                        alert("Could not assign table.");
+                    }
+                }).catch(function (err) {
+                    console.error(err);
+                    alert("Error assigning table.");
+                });
+            });
+        });
+    });
+    </script>
+</body>
+</html>
 
 </body>
 </html>

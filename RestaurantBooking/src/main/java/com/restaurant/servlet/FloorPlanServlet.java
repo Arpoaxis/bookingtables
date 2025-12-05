@@ -25,28 +25,29 @@ public class FloorPlanServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = req.getSession(false);
-        Integer restaurantId = (session != null) ? (Integer) session.getAttribute("restaurantId") : null;
+        Integer restaurantId = (session != null)
+                ? (Integer) session.getAttribute("restaurantId")
+                : null;
 
-        // Default to restaurant 1 if not set
         if (restaurantId == null) {
-            restaurantId = 1;
+            restaurantId = 1; // default
         }
 
         String dbPath = getServletContext()
                 .getRealPath("/WEB-INF/database/restBooking.db");
 
-        // Get date parameter or use today
         String dateParam = req.getParameter("date");
         String selectedDate = (dateParam != null && !dateParam.isEmpty())
                 ? dateParam
-                : LocalDate.now().toString();
+                : java.time.LocalDate.now().toString();
 
         try {
             RestaurantTableDao tableDao = new RestaurantTableDao(dbPath);
             List<RestaurantTable> tables = tableDao.getAllTables();
 
             BookingDao bookingDao = new BookingDao(getServletContext());
-            Map<Integer, String> tableStatusMap = bookingDao.getTableStatusMap(restaurantId, selectedDate);
+            Map<Integer, String> tableStatusMap =
+                    bookingDao.getTableStatusMap(restaurantId, selectedDate);
 
             req.setAttribute("tables", tables);
             req.setAttribute("tableStatusMap", tableStatusMap);
@@ -55,11 +56,16 @@ public class FloorPlanServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            req.setAttribute("error",
-                    "Could not load floor plan: " + e.getMessage());
+            req.setAttribute("error", "Could not load floor plan: " + e.getMessage());
         }
 
-        req.getRequestDispatcher("/WEB-INF/jsp/admin/floor_plan.jsp")
-           .forward(req, resp);
+        // Decide which JSP to use
+        boolean embedded = "true".equalsIgnoreCase(req.getParameter("embedded"));
+        String jsp = embedded
+                ? "/WEB-INF/jsp/admin/floor_plan_embed.jsp"
+                : "/WEB-INF/jsp/admin/floor_plan.jsp";
+
+        req.getRequestDispatcher(jsp).forward(req, resp);
     }
 }
+

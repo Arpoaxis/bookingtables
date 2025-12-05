@@ -61,7 +61,7 @@ public class WaitlistDao {
                 ?, ?, ?, ?, ?, ?,
                 'WAITING',
                 NULL,
-                datetime('now'),
+                datetime('now','-8 hours'),
                 NULL,
                 ?, ?
             )
