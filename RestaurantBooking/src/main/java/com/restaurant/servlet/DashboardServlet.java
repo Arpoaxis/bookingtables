@@ -1,4 +1,6 @@
 package com.restaurant.servlet;
+import com.restaurant.model.User;
+
 
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.*;
@@ -24,13 +26,32 @@ public class DashboardServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        
-        Integer restaurantId = (Integer) session.getAttribute("restaurantId");
-        
+
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        String role = (String) session.getAttribute("role");
+        if (role == null ||
+                !(role.equalsIgnoreCase("ADMIN")
+               || role.equalsIgnoreCase("MANAGER"))) {
+            // Only admins & managers can see /admin/dashboard
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
+            return;
+        }
+
+        // Prefer restaurant from user; fall back to session attribute if needed
+        Integer restaurantId = user.getRestaurantId();
+        if (restaurantId == null) {
+            restaurantId = (Integer) session.getAttribute("restaurantId");
+        }
+
         try (Connection conn = DatabaseUtility.getConnection(getServletContext())) {
 
             // total bookings for this restaurant (or all if null)
@@ -67,6 +88,7 @@ public class DashboardServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/jsp/admin/dashboard.jsp")
            .forward(req, resp);
     }
+
 
 
     /**

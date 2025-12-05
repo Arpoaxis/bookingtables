@@ -9,6 +9,12 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.time.LocalDate;
+
 
 @WebListener
 public class DatabaseInitializer implements ServletContextListener {
@@ -198,6 +204,9 @@ public class DatabaseInitializer implements ServletContextListener {
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_restaurant_tables_restaurant ON restaurant_tables(restaurant_id);");
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_bookings_restaurant ON bookings(restaurant_id);");
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_users_restaurant ON users(restaurant_id);");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_waitlists_restaurant_status ON waitlists(restaurant_id, status, queue_position);");
+                    
+
 
 
                     // ========== DEFAULT DATA ==========
@@ -271,8 +280,10 @@ public class DatabaseInitializer implements ServletContextListener {
             	loadUserRolesFromCsv(ctx, "/WEB-INF/data/user_roles.csv", url);
             	loadRestaurantTables(ctx, "/WEB-INF/data/restaurant_tables.csv", url);
             	loadBookings(ctx, "/WEB-INF/data/bookings.csv", url);
-            	loadWaitlists(ctx, "/WEB-INF/data/waitlists.csv", url);
-            	loadWaitlistTableLinks(ctx, "/WEB-INF/data/waitlist_tables_link.csv", url);
+            	//loadWaitlists(ctx, "/WEB-INF/data/waitlists.csv", url);
+            	//loadWaitlistTableLinks(ctx, "/WEB-INF/data/waitlist_tables_link.csv", url);
+            	seedPresentationBookings(url);
+
 
             	System.out.println("CSV seed data loaded successfully.");
             	System.out.println("Database ready at: " + dbFile.getAbsolutePath());
@@ -794,6 +805,131 @@ public class DatabaseInitializer implements ServletContextListener {
             }
         }
     }
+    private void seedPresentationBookings(String url) throws Exception {
+        // We only call this when the DB is first created (dbExists == false)
+        System.out.println("Seeding extra demo bookings for presentation…");
+
+        try (Connection conn = DriverManager.getConnection(url)) {
+            conn.setAutoCommit(false);
+
+            try {
+                // 1) Build a pool of "customer" user_ids (all active @example.com users)
+                List<Integer> customerIds = new ArrayList<>();
+
+                String customerSql = """
+                    SELECT user_id
+                    FROM users
+                    WHERE email LIKE '%@example.com'
+                      AND active = 1
+                """;
+
+                try (PreparedStatement ps = conn.prepareStatement(customerSql);
+                     ResultSet rs = ps.executeQuery()) {
+
+                    while (rs.next()) {
+                        customerIds.add(rs.getInt(1));
+                    }
+                }
+
+                if (customerIds.isEmpty()) {
+                    System.out.println("No @example.com customers found; skipping demo booking seed.");
+                    return;
+                }
+
+                // 2) Prepare insert for bookings
+                String insertSql = """
+                    INSERT INTO bookings(
+                        user_id,
+                        restaurant_id,
+                        number_of_guests,
+                        booking_date,
+                        booking_time,
+                        special_requests,
+                        booking_status,
+                        created
+                    )
+                    VALUES (?,?,?,?,?,?,?,?)
+                """;
+
+                String[] times = { "17:30:00", "18:30:00", "19:30:00" }; // 3 slots → 30 bookings / restaurant / day
+                String[] requests = {
+                        "None",
+                        "Window seat if possible",
+                        "Birthday celebration",
+                        "Anniversary",
+                        "Allergy: gluten free",
+                        "High chair needed",
+                        "Booth preferred",
+                        "Quiet corner if available"
+                };
+                String[] statuses = {
+                        "CONFIRMED", "CONFIRMED", "CONFIRMED",
+                        "PENDING",
+                        "CONFIRMED",
+                        "SEATED"
+                };
+
+                LocalDate start = LocalDate.of(2025, 12, 4);  // Thu before presentation
+                LocalDate end   = LocalDate.of(2025, 12, 8);  // Mon presentation day
+
+                int customerIndex = 0;
+
+                try (PreparedStatement insert = conn.prepareStatement(insertSql)) {
+
+                    for (LocalDate day = start; !day.isAfter(end); day = day.plusDays(1)) {
+                        for (int restaurantId = 1; restaurantId <= 3; restaurantId++) {
+
+                            for (int tIndex = 0; tIndex < times.length; tIndex++) {
+                                String time = times[tIndex];
+
+                                // 10 "virtual" tables per restaurant per time slot
+                                for (int tableNum = 1; tableNum <= 10; tableNum++) {
+
+                                    // Rotate through existing customer accounts
+                                    int userId = customerIds.get(customerIndex % customerIds.size());
+                                    customerIndex++;
+
+                                    int guests = 2 + ((tableNum + tIndex + restaurantId) % 5); // 2..6
+                                    String req = requests[
+                                            (tableNum + tIndex + restaurantId) % requests.length
+                                    ];
+                                    String status = statuses[
+                                            (tableNum + tIndex + restaurantId) % statuses.length
+                                    ];
+
+                                    insert.setInt(1, userId);
+                                    insert.setInt(2, restaurantId);
+                                    insert.setInt(3, guests);
+                                    insert.setString(4, day.toString());    // yyyy-MM-dd
+                                    insert.setString(5, time);             // HH:mm:ss (string only)
+                                    insert.setString(6, req);
+                                    insert.setString(7, status);
+
+                                    // Created a few days before the booking date, just for realism
+                                    LocalDate created = day.minusDays(2 + tIndex);
+                                    insert.setString(8, created.toString() + " 12:00");
+
+                                    insert.addBatch();
+                                }
+                            }
+                        }
+                    }
+
+                    insert.executeBatch();
+                }
+
+                conn.commit();
+                System.out.println("Demo presentation bookings created successfully.");
+
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
+    }
+
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {

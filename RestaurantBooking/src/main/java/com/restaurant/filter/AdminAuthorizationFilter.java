@@ -11,7 +11,7 @@ import com.restaurant.model.User;
 /**
  * Filter to protect admin endpoints from unauthorized access
  */
-@WebFilter(urlPatterns = {"/admin/*", "/jsp/admin/*"})
+@WebFilter(urlPatterns = {"/admin/*"})
 public class AdminAuthorizationFilter implements Filter {
 
     @Override
@@ -23,25 +23,31 @@ public class AdminAuthorizationFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletRequest httpRequest  = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // Get the session
         HttpSession session = httpRequest.getSession(false);
 
-        // Check if user is logged in and has ADMIN role
         if (session != null) {
             User user = (User) session.getAttribute("user");
-            if (user != null && "ADMIN".equalsIgnoreCase(user.getAccountType())) {
-                // User is authorized, continue
-                chain.doFilter(request, response);
-                return;
+
+            if (user != null) {
+                String role = user.getAccountType();
+
+                // ✅ Allow both ADMIN and MANAGER
+                if (role != null &&
+                        (role.equalsIgnoreCase("ADMIN") ||
+                         role.equalsIgnoreCase("MANAGER"))) {
+
+                    chain.doFilter(request, response);
+                    return;
+                }
             }
         }
 
-        // User is not authorized - redirect to login page
-        httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        httpResponse.sendRedirect(httpRequest.getContextPath() + "/jsp/login/login_page.jsp?error=unauthorized");
+        // ❌ Not logged in or not admin/manager → redirect to login
+        String ctx = httpRequest.getContextPath();
+        httpResponse.sendRedirect(ctx + "/login?error=unauthorized");
     }
 
     @Override

@@ -36,10 +36,12 @@ public class EmployeeManageServlet extends HttpServlet {
 
         // Optionally, enforce admin role
         String role = (String) session.getAttribute("role");
-        if (role == null || !"ADMIN".equalsIgnoreCase(role)) {
+        if (role == null ||
+            !( "ADMIN".equalsIgnoreCase(role) || "MANAGER".equalsIgnoreCase(role) )) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
             return;
         }
+
 
         Integer restaurantId = (Integer) session.getAttribute("restaurantId");
         if (restaurantId == null) {
