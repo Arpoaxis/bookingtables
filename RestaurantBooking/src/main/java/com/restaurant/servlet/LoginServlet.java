@@ -59,6 +59,7 @@ public class LoginServlet extends HttpServlet {
         session.setAttribute("role", user.getAccountType());
         session.setAttribute("userId", user.getUserId());
 
+
         String role = user.getAccountType();
         String ctx = request.getContextPath();
 
@@ -68,6 +69,7 @@ public class LoginServlet extends HttpServlet {
               || role.equalsIgnoreCase("MANAGER")
               || role.equalsIgnoreCase("HOST")
               || role.equalsIgnoreCase("EMPLOYEE"));
+
 
         Integer restaurantId = user.getRestaurantId();
 
@@ -83,6 +85,7 @@ public class LoginServlet extends HttpServlet {
                     restaurantId = 3;
                 }
             }
+
             if (restaurantId != null) {
                 user.setRestaurantId(restaurantId);
             }
@@ -92,7 +95,7 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("restaurantId", restaurantId);
         }
 
-        // ---------- Return-after-login support ----------
+
         String returnUrl = (String) session.getAttribute("returnAfterLogin");
         session.removeAttribute("returnAfterLogin");
 
@@ -100,6 +103,7 @@ public class LoginServlet extends HttpServlet {
             response.sendRedirect(ctx + returnUrl);
             return;
         }
+
 
         // ---------- Final redirect by role ----------
         if ("ADMIN".equalsIgnoreCase(role)) {
@@ -115,6 +119,7 @@ public class LoginServlet extends HttpServlet {
 
         } else {
             // CUSTOMER or anything else
+
             response.sendRedirect(ctx + "/");
         }
     }

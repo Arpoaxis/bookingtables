@@ -7,22 +7,23 @@ import jakarta.servlet.ServletContext;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BookingDao {
-	
-	
-	private final ServletContext servletContext;
-	
-	public BookingDao(ServletContext servletContext) {
+
+    private final ServletContext servletContext;
+
+    public BookingDao(ServletContext servletContext) {
         this.servletContext = servletContext;
     }
-	
-	private Connection getConn() throws SQLException {
+
+    private Connection getConn() throws SQLException {
         return DatabaseUtility.getConnection(servletContext);
     }
-	
-	// 1) CREATE BOOKING
+
+    // 1) CREATE BOOKING
     public static void createBooking(ServletContext ctx, int userId, int restaurantId,
                                      int guests, String date, String time, String requests)
             throws Exception {
@@ -46,7 +47,8 @@ public class BookingDao {
             ps.executeUpdate();
         }
     }
-    // 2) VIEW BOOKINGS
+
+    // 2) VIEW BOOKINGS FOR A USER
     public static List<Booking> getBookingsForUser(ServletContext ctx, int userId) throws Exception {
         List<Booking> list = new ArrayList<>();
 
@@ -67,7 +69,6 @@ public class BookingDao {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-
                     Booking b = new Booking();
                     b.setBookingId(rs.getInt("booking_id"));
                     b.setRestaurantId(rs.getInt("restaurant_id"));
@@ -85,7 +86,8 @@ public class BookingDao {
 
         return list;
     }
- // 3) CANCEL BOOKING
+
+    // 3) CANCEL BOOKING
     public static void cancelBooking(ServletContext ctx, int bookingId, int userId) throws Exception {
 
         String sql = """
@@ -118,7 +120,7 @@ public class BookingDao {
             ORDER BY b.booking_time ASC, b.booking_id ASC
         """;
 
-        List<Booking> result = new java.util.ArrayList<>();
+        List<Booking> result = new ArrayList<>();
 
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -164,5 +166,81 @@ public class BookingDao {
         return b;
     }
 
+    /**
+     * 5) GET TABLE BOOKING STATUS FOR FLOOR PLAN
+     * Returns a map of table_id -> booking status for a given date.
+     * Status priority: SEATED > CONFIRMED > PENDING (if multiple bookings exist)
+     */
+    public Map<Integer, String> getTableStatusMap(int restaurantId, String date) throws SQLException {
+        Map<Integer, String> statusMap = new HashMap<>();
 
+        String sql = """
+            SELECT DISTINCT bt.table_id, b.booking_status
+            FROM bookings b
+            JOIN booking_tables bt ON b.booking_id = bt.booking_id
+            WHERE b.restaurant_id = ?
+              AND b.booking_date = ?
+              AND b.booking_status IN ('PENDING', 'CONFIRMED', 'SEATED')
+            ORDER BY bt.table_id,
+                     CASE b.booking_status
+                       WHEN 'SEATED' THEN 1
+                       WHEN 'CONFIRMED' THEN 2
+                       WHEN 'PENDING' THEN 3
+                       ELSE 4
+                     END
+        """;
+
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, restaurantId);
+            ps.setString(2, date);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int tableId = rs.getInt("table_id");
+                    String status = rs.getString("booking_status");
+
+                    // first (highest-priority) status for each table wins
+                    statusMap.putIfAbsent(tableId, status);
+                }
+            }
+        }
+
+        return statusMap;
+    }
+
+    /**
+     * 6) GET BOOKING DETAILS FOR A SPECIFIC TABLE AND DATE
+     * Returns list of bookings for a table on a given date.
+     */
+    public List<Booking> getBookingsForTable(int tableId, String date) throws SQLException {
+        List<Booking> result = new ArrayList<>();
+
+        String sql = """
+            SELECT b.*, u.email AS customer_email
+            FROM bookings b
+            JOIN booking_tables bt ON b.booking_id = bt.booking_id
+            JOIN users u ON b.user_id = u.user_id
+            WHERE bt.table_id = ?
+              AND b.booking_date = ?
+              AND b.booking_status <> 'CANCELLED'
+            ORDER BY b.booking_time ASC
+        """;
+
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, tableId);
+            ps.setString(2, date);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(mapRowToBooking(rs));
+                }
+            }
+        }
+
+        return result;
+    }
 }

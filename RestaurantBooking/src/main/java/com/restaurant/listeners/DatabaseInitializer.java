@@ -284,6 +284,7 @@ public class DatabaseInitializer implements ServletContextListener {
             	//loadWaitlistTableLinks(ctx, "/WEB-INF/data/waitlist_tables_link.csv", url);
             	seedPresentationBookings(url);
 
+
             	System.out.println("CSV seed data loaded successfully.");
             	System.out.println("Database ready at: " + dbFile.getAbsolutePath());
             }
