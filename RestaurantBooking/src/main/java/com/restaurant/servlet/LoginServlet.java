@@ -105,22 +105,23 @@ public class LoginServlet extends HttpServlet {
         }
 
 
-        // ---------- Final redirect by role ----------
-        if ("ADMIN".equalsIgnoreCase(role)) {
-            // Only system admins see the admin dashboard
+     // ---------- Final redirect by role ----------
+        if ("ADMIN".equalsIgnoreCase(role)
+                || "MANAGER".equalsIgnoreCase(role)) {
+
+            // Admins and managers share the admin dashboard
             response.sendRedirect(ctx + "/admin/dashboard");
 
-        } else if ("MANAGER".equalsIgnoreCase(role)
-                || "HOST".equalsIgnoreCase(role)
+        } else if ("HOST".equalsIgnoreCase(role)
                 || "EMPLOYEE".equalsIgnoreCase(role)) {
 
-            // All restaurant staff (including managers) use the staff dashboard
+            // Front-of-house / staff
             response.sendRedirect(ctx + "/staff/dashboard");
 
         } else {
             // CUSTOMER or anything else
-
             response.sendRedirect(ctx + "/");
         }
+
     }
 }
