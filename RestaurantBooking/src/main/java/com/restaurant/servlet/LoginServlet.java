@@ -59,23 +59,30 @@ public class LoginServlet extends HttpServlet {
         session.setAttribute("role", user.getAccountType());
         session.setAttribute("userId", user.getUserId());
 
-        // Prefer restaurant_id from DB (User model)
+        String role = user.getAccountType();
+        String ctx = request.getContextPath();
+
+        // ---------- Restaurant association for staff ----------
+        boolean isStaff = role != null &&
+                (role.equalsIgnoreCase("ADMIN")
+              || role.equalsIgnoreCase("MANAGER")
+              || role.equalsIgnoreCase("HOST")
+              || role.equalsIgnoreCase("EMPLOYEE"));
+
         Integer restaurantId = user.getRestaurantId();
 
-        // Optional fallback for very old admin seeds with no restaurant_id set
-        if (restaurantId == null &&
-            ("ADMIN".equalsIgnoreCase(user.getAccountType())
-          || "MANAGER".equalsIgnoreCase(user.getAccountType()))) {
-
-            if (email.endsWith("@centralgrill.com")) {
-                restaurantId = 1;
-            } else if (email.endsWith("@sushipalace.com")) {
-                restaurantId = 2;
-            } else if (email.endsWith("@pastacorner.com")) {
-                restaurantId = 3;
+        // Fallback for any old seeds with null restaurant_id
+        if (restaurantId == null && isStaff) {
+            if (email != null) {
+                String lowerEmail = email.toLowerCase();
+                if (lowerEmail.endsWith("@centralgrill.com")) {
+                    restaurantId = 1;
+                } else if (lowerEmail.endsWith("@sushipalace.com")) {
+                    restaurantId = 2;
+                } else if (lowerEmail.endsWith("@pastacorner.com")) {
+                    restaurantId = 3;
+                }
             }
-
-            // Also update the user object so the rest of the app sees it
             if (restaurantId != null) {
                 user.setRestaurantId(restaurantId);
             }
@@ -85,33 +92,29 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("restaurantId", restaurantId);
         }
 
-        // Handle returnAfterLogin
+        // ---------- Return-after-login support ----------
         String returnUrl = (String) session.getAttribute("returnAfterLogin");
         session.removeAttribute("returnAfterLogin");
 
         if (returnUrl != null && !returnUrl.isBlank()) {
-            response.sendRedirect(request.getContextPath() + returnUrl);
+            response.sendRedirect(ctx + returnUrl);
             return;
         }
 
-        // Final redirect by role
-        String role = user.getAccountType();
-        String ctx = request.getContextPath();
-
-        if ("ADMIN".equalsIgnoreCase(role)
-                || "MANAGER".equalsIgnoreCase(role)) {
-
-            // Admin / manager → admin dashboard
+        // ---------- Final redirect by role ----------
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            // Only system admins see the admin dashboard
             response.sendRedirect(ctx + "/admin/dashboard");
 
-        } else if ("HOST".equalsIgnoreCase(role)
+        } else if ("MANAGER".equalsIgnoreCase(role)
+                || "HOST".equalsIgnoreCase(role)
                 || "EMPLOYEE".equalsIgnoreCase(role)) {
 
-            // Staff → staff dashboard
+            // All restaurant staff (including managers) use the staff dashboard
             response.sendRedirect(ctx + "/staff/dashboard");
 
         } else {
-            // CUSTOMER or any other role → public home
+            // CUSTOMER or anything else
             response.sendRedirect(ctx + "/");
         }
     }
