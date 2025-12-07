@@ -279,14 +279,14 @@ public class RestaurantTableDao {
 
             int i = 1;
             ps.setInt(i++, restaurantId);
-            ps.setInt(i++, guests);      // min_capacity <= guests
-            ps.setInt(i++, guests);      // max_capacity >= guests
+            ps.setInt(i++, guests);      
+            ps.setInt(i++, guests);      
 
             ps.setInt(i++, restaurantId);
             ps.setString(i++, date);
 
-            ps.setString(i++, endTime);   // existing booking starts before new end
-            ps.setString(i++, startTime); // existing booking ends after new start
+            ps.setString(i++, endTime);   
+            ps.setString(i++, startTime); 
 
             System.out.println("SQL parameters set, executing query…");
 
@@ -311,5 +311,17 @@ public class RestaurantTableDao {
         }
 
         return result;
+    }
+    // Find a single available table
+    public Integer findAvailableTable(int restaurantId, String date, String time, int guests) {
+
+        List<RestaurantTable> tables = getAvailableTables(restaurantId, date, time, guests);
+
+        if (tables.isEmpty()) {
+            return null; // no table available
+        }
+
+       
+        return tables.get(0).getTableId();
     }
     }

@@ -7,51 +7,56 @@
     <meta charset="UTF-8">
     <title>New Reservation</title>
     <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
-
 </head>
 
 <body>
 
-<jsp:include page="/WEB-INF/jsp/header.jsp"/>
+    <jsp:include page="/WEB-INF/jsp/header.jsp"/>
 
-<div class="reservation-container">
-    <div class="reservation-card">
+    <div class="reservation-container">
 
         <h1 class="reservation-title">Reserve at ${restaurant.name}</h1>
 
-        <form action="<c:url value='/booking/create'/>" method="post" class="reservation-form">
+  
+        <c:if test="${not empty error}">
+            <div class="booking-error">${error}</div>
+        </c:if>
 
-            <div class="res-form-row">
-                <label>Date:</label>
-                <input type="date" id="datePicker" name="date">
-            </div>
+        <div class="reservation-card">
 
-            <div class="res-form-row">
-                <label>Time:</label>
-                <input type="time" id="timePicker" name="time">
-            </div>
+            <form action="<c:url value='/booking/create'/>" method="post" class="reservation-form">
 
-            <div class="res-form-row">
-                <label>Guests:</label>
-                <input type="number" id="guestInput" name="guests" min="1" max="20">
-            </div>
+                <input type="hidden" name="restaurantId" value="${restaurant.restaurantId}">
+                <input type="hidden" name="csrf_token" value="${csrfToken}">
 
-            <div class="res-form-row">
-                <label>Special Requests:</label>
-                <textarea name="requests" rows="3"></textarea>
-            </div>
+                <div class="res-form-row">
+                    <label>Date:</label>
+                    <input type="date" id="datePicker" name="date" required>
+                </div>
 
-            <div id="tableContainer" class="table-select-box">
-                <em>Choose a date and time to load available tables…</em>
-            </div>
+                <div class="res-form-row">
+                    <label>Time:</label>
+                    <input type="time" id="timePicker" name="time" required>
+                </div>
 
-            <button type="submit" class="reservation-submit-btn">
-                Submit Reservation
-            </button>
+                <div class="res-form-row">
+                    <label>Guests:</label>
+                    <input type="number" id="guestInput" name="guests" min="1" max="20" required>
+                </div>
 
-        </form>
+                <div class="res-form-row">
+                    <label>Special Requests:</label>
+                    <textarea name="requests" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="reservation-submit-btn">
+                    Submit Reservation
+                </button>
+
+            </form>
+
+        </div>
     </div>
-</div>
 
 <script>
 const ctx = "${pageContext.request.contextPath}";
