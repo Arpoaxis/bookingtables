@@ -12,9 +12,7 @@
 <body>
 
 	<c:if test="${not embedded}">
-		<div class="home-link">
 			<jsp:include page="/WEB-INF/jsp/header.jsp" />
-		</div>
 		<jsp:include page="/WEB-INF/jsp/admin/back_to_dashboard.jsp" />
 	</c:if>
 

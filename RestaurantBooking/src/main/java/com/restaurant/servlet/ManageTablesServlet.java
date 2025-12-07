@@ -3,7 +3,7 @@ package com.restaurant.servlet;
 import com.restaurant.util.CSRFUtil;
 import com.restaurant.dao.RestaurantTableDao;
 import com.restaurant.model.RestaurantTable;
-
+import com.restaurant.model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -20,12 +20,22 @@ public class ManageTablesServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-
+    	//require logged-in restaurant admin
+    	User user = (User) req.getSession().getAttribute("user");
+    	if (user == null || user.getRestaurantId() == null) {
+            req.setAttribute("error", "You must be logged in as a restaurant admin.");
+            req.getRequestDispatcher("/WEB-INF/jsp/admin/manage_tables.jsp")
+               .forward(req, resp);
+            return;
+        }
+    	int restaurantId = user.getRestaurantId();
         String dbPath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");
-
+        
+        
         try {
             RestaurantTableDao dao = new RestaurantTableDao(dbPath);
-            List<RestaurantTable> tables = dao.getAllTables();
+            List<RestaurantTable> tables = dao.getTablesByRestaurant(restaurantId);
+
 
             req.setAttribute("tables", tables);
 

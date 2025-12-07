@@ -7,11 +7,9 @@
     <title>Forgot Password</title>
     <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
-<body class="dashboard-body">
 
-<div class="home-link">
-    <jsp:include page="/WEB-INF/jsp/header.jsp" />
-</div>
+<jsp:include page="/WEB-INF/jsp/header.jsp" />
+<body class="dashboard-body">
 
 <div class="dashboard-main auth-main">
     <div class="auth-card">

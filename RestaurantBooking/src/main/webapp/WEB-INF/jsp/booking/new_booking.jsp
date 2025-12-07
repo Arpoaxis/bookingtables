@@ -1,95 +1,132 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Make a Reservation</title>
+    <title>New Reservation</title>
     <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
+
 </head>
 
 <body>
 
 <jsp:include page="/WEB-INF/jsp/header.jsp"/>
 
-<div class="booking-page">
+<div class="reservation-container">
+    <div class="reservation-card">
 
-    <div class="booking-card">
+        <h1 class="reservation-title">Reserve at ${restaurant.name}</h1>
 
-        <h1 class="booking-title">Reserve at ${restaurant.name}</h1>
+        <form action="<c:url value='/booking/create'/>" method="post" class="reservation-form">
 
-        <%-- Display error message if present --%>
-        <c:if test="${not empty error}">
-            <div class="booking-error">${error}</div>
-        </c:if>
-
-        <form action="<c:url value='/booking/create'/>" method="post" class="booking-form">
-
-            <%-- CSRF token --%>
-            <input type="hidden" name="csrf_token" value="${csrfToken}"/>
-
-            <%-- Restaurant ID --%>
-            <input type="hidden" name="restaurantId" value="${restaurant.restaurantId}"/>
-
-            <label>Date</label>
-            <input type="date" id="datePicker" name="date" required>
-
-            <label>Time</label>
-           
-            <select id="timeSlot" name="time" required>
-			  
-			    <option value="08:00">08:00</option>
-			    <option value="09:00">09:00</option>
-			    <option value="10:00">10:00</option>
-			    <option value="11:00">11:00</option>
-			    <option value="12:00">12:00</option>
-			    <option value="13:00">13:00</option>
-			    <option value="14:00">14:00</option>
-			    <option value="15:00">15:00</option>
-			    <option value="16:00">16:00</option>
-			    <option value="17:00">17:00</option>
-			    <option value="18:00">18:00</option>
-			    <option value="19:00">19:00</option>
-			    <option value="20:00">20:00</option>
-			    <option value="21:00">21:00</option>
-			    <option value="22:00">22:00</option>
-			   
-			</select>
-
-            <label>Number of Guests</label>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <input type="range" id="guestSlider" name="guests" min="1" max="20" value="2">
-                <span id="guestCount">2</span>
+            <div class="res-form-row">
+                <label>Date:</label>
+                <input type="date" id="datePicker" name="date">
             </div>
 
-            <label>Special Requests</label>
-            <textarea name="requests" rows="3"></textarea>
+            <div class="res-form-row">
+                <label>Time:</label>
+                <input type="time" id="timePicker" name="time">
+            </div>
 
-            <button type="submit" class="btn btn-primary booking-btn">
-                Confirm Reservation
+            <div class="res-form-row">
+                <label>Guests:</label>
+                <input type="number" id="guestInput" name="guests" min="1" max="20">
+            </div>
+
+            <div class="res-form-row">
+                <label>Special Requests:</label>
+                <textarea name="requests" rows="3"></textarea>
+            </div>
+
+            <div id="tableContainer" class="table-select-box">
+                <em>Choose a date and time to load available tables…</em>
+            </div>
+
+            <button type="submit" class="reservation-submit-btn">
+                Submit Reservation
             </button>
 
         </form>
-
     </div>
-
 </div>
 
 <script>
-    (function() {
-        var slider = document.getElementById('guestsSlider');
-        var output = document.getElementById('guestCount');
-        if (!slider || !output) return;
+const ctx = "${pageContext.request.contextPath}";
+console.log("CTX =", ctx);
 
-        // initial sync
-        output.textContent = slider.value;
+const restaurantId = "<c:out value='${restaurant.restaurantId}'/>";
+console.log("Restaurant ID =", restaurantId);
 
-        slider.addEventListener('input', function () {
-            output.textContent = this.value;
+function loadTables() {
+    const date = document.getElementById("datePicker").value;
+    const time = document.getElementById("timePicker").value;
+    const guests = document.getElementById("guestInput").value;
+
+    if (!date || !time || !guests || !restaurantId) {
+        console.log("Missing values", {date, time, guests, restaurantId});
+        return;
+    }
+
+    const url = ctx + "/api/available-tables"
+    + "?restaurantId=" + restaurantId
+    + "&date=" + date
+    + "&time=" + time
+    + "&guests=" + guests;
+	console.log("FETCH URL =", url);
+
+
+    fetch(url)
+    .then(res => res.json())
+    .then(data => {
+    	console.log("TABLES RETURNED =", data);
+
+        const container = document.getElementById("tableContainer");
+        container.innerHTML = "";
+
+        if (!Array.isArray(data) || data.length === 0) {
+            container.innerHTML = "<em>No available tables for this time.</em>";
+            return;
+        }
+
+        data.forEach(t => {
+            const div = document.createElement("div");
+            div.className = "table-option";
+            const seatText = (t.minCapacity === t.maxCapacity)
+            ? t.maxCapacity
+            : `${t.minCapacity}-${t.maxCapacity}`;
+            div.innerHTML = `
+                <label>
+                    <input type="radio" name="tableRadio" value="${t.tableId}">
+                    Table #\${t.tableNumber} — Seats \${t.minCapacity}-\${t.maxCapacity}
+                </label>
+            `;
+
+            div.querySelector("input").addEventListener("change", () => {
+                document.getElementById("tableId").value = t.tableId;
+            });
+
+            container.appendChild(div);
         });
-    })();
+    })
+    .catch(err => {
+        console.error("API ERROR:", err);
+        document.getElementById("tableContainer").innerHTML =
+            "<em>Error loading tables.</em>";
+    });
+
+}
+
+    document.getElementById("datePicker").addEventListener("change", loadTables);
+    document.getElementById("timePicker").addEventListener("change", loadTables);
+    document.getElementById("guestInput").addEventListener("input", loadTables);
+
+    if ("${date}" && "${time}") {
+        loadTables();
+    }
 </script>
-
-
 
 </body>
 </html>

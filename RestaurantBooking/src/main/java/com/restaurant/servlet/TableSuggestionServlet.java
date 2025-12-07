@@ -2,7 +2,7 @@ package com.restaurant.servlet;
 
 import com.restaurant.dao.RestaurantTableDao;
 import com.restaurant.model.RestaurantTable;
-
+import com.restaurant.model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -25,10 +25,15 @@ public class TableSuggestionServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        User user = (User) req.getSession().getAttribute("user");
+        if (user == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+        int restaurantId = user.getRestaurantId();
         RestaurantTableDao dao = buildDao(req);
-        List<RestaurantTable> allTables = dao.getAllTables();
-        req.setAttribute("tables", allTables);
-
+        List<RestaurantTable>tables = dao.getTablesByRestaurant(restaurantId);
+        req.setAttribute("tables", tables);	
         req.getRequestDispatcher("/WEB-INF/jsp/admin/table_planner.jsp")
            .forward(req, resp);
     }
@@ -36,11 +41,18 @@ public class TableSuggestionServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+    	User user = (User) req.getSession().getAttribute("user");
+    	if (user == null) {
+    	    resp.sendRedirect(req.getContextPath() + "/login");
+    	    return;
+    	}
+    	int restaurantId = user.getRestaurantId();
+    	RestaurantTableDao dao = buildDao(req);
+    	List<RestaurantTable> tables = dao.getTablesByRestaurant(restaurantId);
+
+    	req.setAttribute("tables", tables);	
 
         String sizeStr = req.getParameter("partySize");
-        RestaurantTableDao dao = buildDao(req);
-        List<RestaurantTable> allTables = dao.getAllTables();
-        req.setAttribute("tables", allTables); // always show full list
 
         if (sizeStr == null || sizeStr.isBlank()) {
             req.setAttribute("error", "Please enter a party size.");
@@ -54,7 +66,7 @@ public class TableSuggestionServlet extends HttpServlet {
             if (partySize <= 0) {
                 req.setAttribute("error", "Party size must be at least 1.");
             } else {
-                List<RestaurantTable> suggestion = suggestTables(allTables, partySize);
+                List<RestaurantTable> suggestion = suggestTables(tables, partySize);
                 req.setAttribute("partySize", partySize);
                 req.setAttribute("suggestedTables", suggestion);
             }

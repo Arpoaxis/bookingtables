@@ -21,13 +21,16 @@
 </head>
 
 <body>
+	<jsp:include page="/WEB-INF/jsp/header.jsp"/>
+
 	<div class="home-link">
-	    <jsp:include page="/WEB-INF/jsp/header.jsp"/>
-	  </div>
-	  <jsp:include page="/WEB-INF/jsp/admin/back_to_dashboard.jsp" />
+	    <jsp:include page="/WEB-INF/jsp/admin/back_to_dashboard.jsp" />
+	</div>
+	
 	<h2>Add New Table</h2>
+	
     <form action="<%=request.getContextPath()%>/admin/add_table" method="post">
-    	<input type="hidden" name="csrf_token" value="${csrfToken}" />
+    	<input type="hidden" name="csrf_token" value="${csrf_token}" />
     	
         <label>Table Number:</label>
         <input type="number" name="tableNumber" required><br><br>
@@ -40,21 +43,22 @@
         <input type="number" name="maxCapacity" min="1" required><br><br>
 
         <label>Combine with Others:</label>
-        <input type="checkbox" name="canCombine"><br><br>
-
+        <input type="hidden" name="canCombine" value="0">
+		<input type="checkbox" name="canCombine" value="1"><br><br>
         <button type="submit">Add Table</button>
         
     </form>
 
     <c:if test="${not empty sessionScope.tableMessage}">
-    <p id="alertMessage" style="color:green;">${sessionScope.tableMessage}</p>
-    <c:remove var="tableMessage" scope="session" />
+	    <div id="alertMessage" style="color:green;">${sessionScope.tableMessage}</div>
+	    <c:remove var="tableMessage" scope="session" />
 	</c:if>
 	
 	<c:if test="${not empty sessionScope.tableError}">
-	    <p id="alertMessage" style="color:red;">${sessionScope.tableError}</p>
+	    <div id="alertMessage" style="color:red;">${sessionScope.tableError}</div>
 	    <c:remove var="tableError" scope="session" />
     </c:if>
+    
 
 </body>
 </html>

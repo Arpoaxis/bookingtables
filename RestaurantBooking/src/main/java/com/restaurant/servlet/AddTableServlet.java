@@ -2,7 +2,7 @@ package com.restaurant.servlet;
 
 import com.restaurant.dao.RestaurantTableDao;
 import com.restaurant.model.RestaurantTable;
-
+import com.restaurant.model.User;
 import java.io.IOException;
 
 import jakarta.servlet.RequestDispatcher;
@@ -32,7 +32,8 @@ public class AddTableServlet extends HttpServlet {
         String minStr        = request.getParameter("minCapacity");
         String maxStr        = request.getParameter("maxCapacity");
         String canCombineStr = request.getParameter("canCombine");
-
+        
+        
         // 1) Basic required-field validation
         if (tableNumStr == null || minStr == null || maxStr == null ||
             tableNumStr.isEmpty() || minStr.isEmpty() || maxStr.isEmpty()) {
@@ -48,10 +49,14 @@ public class AddTableServlet extends HttpServlet {
             int minCapacity = Integer.parseInt(minStr.trim());
             int maxCapacity = Integer.parseInt(maxStr.trim());
             boolean canCombine = (canCombineStr != null);
+            
+            // Get restaurant ID from logged-in user
+            User user = (User) request.getSession().getAttribute("user");
+            int restaurantId = user.getRestaurantId();
 
             // 2) Build model – uses the 4-arg constructor we added
             RestaurantTable table =
-                    new RestaurantTable(tableNumber, minCapacity, maxCapacity, canCombine);
+                    new RestaurantTable(restaurantId, tableNumber, minCapacity, maxCapacity, canCombine);
 
             // 3) Call DAO
             String dbPath = getServletContext().getRealPath("/WEB-INF/database/restBooking.db");

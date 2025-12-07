@@ -3,29 +3,45 @@ package com.restaurant.model;
 public class RestaurantTable {
 
     private int tableId;
+    private int restaurantId;
     private int tableNumber;
     private int minCapacity;
     private int maxCapacity;
     private boolean canCombine;
 
-    public RestaurantTable() {
-    }
-    public RestaurantTable(int tableNumber,
-            int minCapacity,
-            int maxCapacity,
-            boolean canCombine) {
-    	this(0, tableNumber, minCapacity, maxCapacity, canCombine);
-    }
+    public RestaurantTable() {}
 
-    public RestaurantTable(int tableId, int tableNumber,
-                           int minCapacity, int maxCapacity,
+    // Constructor used when creating a new table
+    public RestaurantTable(int restaurantId,
+                           int tableNumber,
+                           int minCapacity,
+                           int maxCapacity,
                            boolean canCombine) {
-        this.tableId = tableId;
+
+        this.restaurantId = restaurantId;
         this.tableNumber = tableNumber;
         this.minCapacity = minCapacity;
         this.maxCapacity = maxCapacity;
         this.canCombine = canCombine;
     }
+
+    //Constructor used when retrieving from DB
+    public RestaurantTable(int tableId,
+                           int restaurantId,
+                           int tableNumber,
+                           int minCapacity,
+                           int maxCapacity,
+                           boolean canCombine) {
+
+        this.tableId = tableId;
+        this.restaurantId = restaurantId;
+        this.tableNumber = tableNumber;
+        this.minCapacity = minCapacity;
+        this.maxCapacity = maxCapacity;
+        this.canCombine = canCombine;
+    }
+
+
 
     public int getTableId() {
         return tableId;
@@ -33,6 +49,14 @@ public class RestaurantTable {
 
     public void setTableId(int tableId) {
         this.tableId = tableId;
+    }
+
+    public int getRestaurantId() {
+        return restaurantId;
+    }
+
+    public void setRestaurantId(int restaurantId) {
+        this.restaurantId = restaurantId;
     }
 
     public int getTableNumber() {
