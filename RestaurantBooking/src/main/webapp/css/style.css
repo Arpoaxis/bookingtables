@@ -1227,6 +1227,32 @@ body {
     overflow-x: hidden;
 }
 
+/* Reservation form tweaks */
+.reservation-form textarea.reservation-requests {
+    resize: none;      /* user cannot grow/shrink it */
+    overflow-y: auto;  /* scroll if more than ~3 lines */
+}
+
+/* Table options under "pick a table" */
+.table-select-box {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 0.9rem;
+}
+
+.table-option {
+    margin-bottom: 6px;
+}
+
+.table-option label {
+    cursor: pointer;
+}
+
+
+
 /*Dashbood css*/
 
 .dashboard-main {

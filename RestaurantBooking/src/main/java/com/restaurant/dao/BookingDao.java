@@ -50,99 +50,110 @@ public class BookingDao {
 	}
 
 	//CREATE BOOKING AND ASSIGN A TABLE 
-    public static int createBookingWithTable(ServletContext ctx, Integer userId, int restaurantId, int guests, String date,
-                                             String time, String requests, Integer tableId) throws Exception {
-        String insertSql = """
-                INSERT INTO bookings
-                (user_id, restaurant_id, number_of_guests, booking_date, booking_time, special_requests)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """;
+	// CREATE BOOKING AND ASSIGN A TABLE 
+	public static int createBookingWithTable(ServletContext ctx,
+	                                         Integer userId,
+	                                         int restaurantId,
+	                                         int guests,
+	                                         String date,
+	                                         String time,
+	                                         String requests,
+	                                         Integer tableId) throws Exception {
 
-        String insertLink = "INSERT INTO booking_tables (booking_id, table_id) VALUES (?, ?)";
+	    String insertSql = """
+	            INSERT INTO bookings
+	            (user_id, restaurant_id, number_of_guests, booking_date, booking_time, special_requests)
+	            VALUES (?, ?, ?, ?, ?, ?)
+	            """;
 
-        try (Connection conn = DatabaseUtility.getConnection(ctx)) {
-            conn.setAutoCommit(false);
-            try {
-            	// --- FIXED OVERLAP CHECK (matches API logic) ---
-            	LocalTime newStart = LocalTime.parse(time.length() == 5 ? time + ":00" : time);
-            	LocalTime newEnd = newStart.plusHours(1);
+	    String insertLink = "INSERT INTO booking_tables (booking_id, table_id) VALUES (?, ?)";
 
-            	System.out.println("[BookingDao] Checking table availability with:");
-            	System.out.println(" newStart = " + newStart);
-            	System.out.println(" newEnd   = " + newEnd);
+	    try (Connection conn = DatabaseUtility.getConnection(ctx)) {
+	        conn.setAutoCommit(false);
+	        try {
+	            // ---- ONLY CHECK OVERLAP IF A TABLE WAS CHOSEN ----
+	            if (tableId != null) {
+	                LocalTime newStart = LocalTime.parse(time.length() == 5 ? time + ":00" : time);
+	                LocalTime newEnd   = newStart.plusHours(1);
 
-            	String checkSql = """
-            	    SELECT 1
-            	    FROM booking_tables bt
-            	    JOIN bookings b ON bt.booking_id = b.booking_id
-            	    WHERE bt.table_id = ?
-            	      AND b.booking_date = ?
-            	      AND time(b.booking_time) < time(?)
-            	      AND time(b.booking_time, '+1 hour') > time(?)
-            	      AND b.booking_status <> 'CANCELLED'
-            	    LIMIT 1
-            	""";
+	                System.out.println("[BookingDao] Checking table availability with:");
+	                System.out.println(" newStart = " + newStart);
+	                System.out.println(" newEnd   = " + newEnd);
 
-            	try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
-            	    psCheck.setInt(1, tableId);
-            	    psCheck.setString(2, date);
+	                String checkSql = """
+	                    SELECT 1
+	                    FROM booking_tables bt
+	                    JOIN bookings b ON bt.booking_id = b.booking_id
+	                    WHERE bt.table_id = ?
+	                      AND b.booking_date = ?
+	                      AND time(b.booking_time) < time(?)
+	                      AND time(b.booking_time, '+1 hour') > time(?)
+	                      AND b.booking_status <> 'CANCELLED'
+	                    LIMIT 1
+	                """;
 
-        
-            	    psCheck.setString(3, newEnd.toString());  
-            	    psCheck.setString(4, newStart.toString()); 
+	                try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
+	                    psCheck.setInt(1, tableId);          // safe: tableId is non-null here
+	                    psCheck.setString(2, date);
+	                    psCheck.setString(3, newEnd.toString());
+	                    psCheck.setString(4, newStart.toString());
 
-            	    try (ResultSet rs = psCheck.executeQuery()) {
-            	        if (rs.next()) {
-            	            System.out.println("[BookingDao] Table is already booked in this time window!");
-            	            throw new SQLException("TABLE_ALREADY_BOOKED");
-            	        }
-            	    }
-            	}
-                
+	                    try (ResultSet rs = psCheck.executeQuery()) {
+	                        if (rs.next()) {
+	                            System.out.println("[BookingDao] Table is already booked in this time window!");
+	                            throw new SQLException("TABLE_ALREADY_BOOKED");
+	                        }
+	                    }
+	                }
+	            }
 
-                try (PreparedStatement ps = conn.prepareStatement(insertSql);
-                     PreparedStatement psLink = conn.prepareStatement(insertLink);
-                     PreparedStatement psLast = conn.prepareStatement("SELECT last_insert_rowid()")) {
+	            // ---- INSERT BOOKING ROW ----
+	            try (PreparedStatement ps     = conn.prepareStatement(insertSql);
+	                 PreparedStatement psLink = conn.prepareStatement(insertLink);
+	                 PreparedStatement psLast = conn.prepareStatement("SELECT last_insert_rowid()")) {
 
-                    int i = 1;
-                    if (userId == null) {
-                        ps.setNull(i++, Types.INTEGER);
-                    } else {
-                        ps.setInt(i++, userId);
-                    }
-                    ps.setInt(i++, restaurantId);
-                    ps.setInt(i++, guests);
-                    ps.setString(i++, date);
-                    ps.setString(i++, time);
-                    ps.setString(i++, requests);
+	                int i = 1;
+	                if (userId == null) {
+	                    ps.setNull(i++, Types.INTEGER);
+	                } else {
+	                    ps.setInt(i++, userId);
+	                }
 
-                    ps.executeUpdate();
+	                ps.setInt(i++, restaurantId);
+	                ps.setInt(i++, guests);
+	                ps.setString(i++, date);
+	                ps.setString(i++, time);
+	                ps.setString(i++, requests);
 
-                    int bookingId;
-                    try (ResultSet rs = psLast.executeQuery()) {
-                        rs.next();
-                        bookingId = rs.getInt(1);
-                    }
+	                ps.executeUpdate();
 
-                    if (tableId != null) {
-                        psLink.setInt(1, bookingId);
-                        psLink.setInt(2, tableId);
-                        psLink.executeUpdate();
-                    }
+	                int bookingId;
+	                try (ResultSet rs = psLast.executeQuery()) {
+	                    rs.next();
+	                    bookingId = rs.getInt(1);
+	                }
 
-                    conn.commit();
-                    System.out.println("[BookingDao] Booking created id=" + bookingId + " (tableId=" + tableId + ")");
-                    return bookingId;
-                }
-            } catch (Exception ex) {
-                conn.rollback();
-                System.out.println("[BookingDao] createBookingWithTable failed: " + ex.getMessage());
-                throw ex;
-            } finally {
-                conn.setAutoCommit(true);
-            }
-        }
-    }
+	                // ---- LINK TABLE IF ONE WAS CHOSEN ----
+	                if (tableId != null) {
+	                    psLink.setInt(1, bookingId);
+	                    psLink.setInt(2, tableId);
+	                    psLink.executeUpdate();
+	                }
+
+	                conn.commit();
+	                System.out.println("[BookingDao] Booking created id=" + bookingId + " (tableId=" + tableId + ")");
+	                return bookingId;
+	            }
+	        } catch (Exception ex) {
+	            conn.rollback();
+	            System.out.println("[BookingDao] createBookingWithTable failed: " + ex.getMessage());
+	            throw ex;
+	        } finally {
+	            conn.setAutoCommit(true);
+	        }
+	    }
+	}
+
 
 	// 2) VIEW BOOKINGS FOR A USER
 	public static List<Booking> getBookingsForUser(ServletContext ctx, int userId) throws Exception {
