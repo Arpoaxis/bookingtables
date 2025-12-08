@@ -59,14 +59,16 @@ public class BookingCreateServlet extends HttpServlet {
         // ----- guests -----
         try {
             guests = Integer.valueOf(guestsStr);
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
 
         // ----- optional table id -----
         try {
             if (tableStr != null && !tableStr.isBlank()) {
                 tableId = Integer.valueOf(tableStr);
             }
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
 
         // ====== VALIDATE DATE (not in the past) ======
         LocalDate today = LocalDate.now(ZoneId.of("America/Los_Angeles"));
@@ -91,7 +93,7 @@ public class BookingCreateServlet extends HttpServlet {
         // ====== VALIDATE TIME (11:30–22:00, 15-minute intervals) ======
         LocalTime bookingTime;
         try {
-            // HTML <input type="time"> sends HH:mm or HH:mm:ss (24-hour)
+            // <select name=\"time\"> sends HH:mm (24-hour)
             bookingTime = LocalTime.parse(timeStr);
         } catch (DateTimeParseException e) {
             forwardBack(req, resp,
@@ -128,7 +130,7 @@ public class BookingCreateServlet extends HttpServlet {
                     bookingDate.toString(), // yyyy-MM-dd
                     timeStr,                // keep original HH:mm string
                     requests,
-                    tableId
+                    tableId                 // may be null if no table selected
             );
 
             Restaurant r = RestaurantDao.findById(req.getServletContext(), restaurantId);
