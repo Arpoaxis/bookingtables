@@ -30,16 +30,25 @@
 
                     <div class="auth-actions">
 
-                        <c:if test="${sessionScope.role == 'ADMIN' or sessionScope.role == 'MANAGER'}">
-                            <a class="auth-primary-button" href="<c:url value='/admin/dashboard'/>">
-                                Go to Dashboard
-                            </a>
-                        </c:if>
+			    <%-- Admin & Manager: admin dashboard --%>
+			    <c:if test="${sessionScope.role == 'ADMIN' or sessionScope.role == 'MANAGER'}">
+			        <a class="auth-primary-button" href="<c:url value='/admin/dashboard'/>">
+			            Go to Dashboard
+			        </a>
+			    </c:if>
 
-                        <a class="auth-link-button" href="<c:url value='/logout'/>">
-                            Logout
-                        </a>
-                    </div>
+				    <%-- Host & Employee: staff dashboard --%>
+				    <c:if test="${sessionScope.role == 'HOST' or sessionScope.role == 'EMPLOYEE'}">
+				        <a class="auth-primary-button" href="<c:url value='/staff/dashboard'/>">
+				            Go to Dashboard
+				        </a>
+				    </c:if>
+				
+				    <%-- Logout always shown --%>
+				    <a class="auth-link-button" href="<c:url value='/logout'/>">
+				        Logout
+				    </a>
+				</div>
                 </c:when>
 
                 <%-- Not logged in --%>

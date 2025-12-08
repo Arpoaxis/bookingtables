@@ -22,6 +22,17 @@ body {
 	padding: 20px;
 	margin: 20px;
 }
+.forgot-password-link {
+    color: #4a7ae5;         
+    text-decoration: none;   
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+    color: #2f5ec9;          
+}
 
 .input-row {
 	display: flex; /*vertical alignment*/
@@ -730,6 +741,7 @@ body {
 	justify-content: space-between;
 	padding: 12px 24px;
 	box-sizing: border-box;
+
 }
 
 .header-left .header-logo {
@@ -1213,4 +1225,202 @@ body {
     max-height: none;    /* let it grow inside the card */
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+/* Reservation form tweaks */
+.reservation-form textarea.reservation-requests {
+    resize: none;      /* user cannot grow/shrink it */
+    overflow-y: auto;  /* scroll if more than ~3 lines */
+}
+
+/* Table options under "pick a table" */
+.table-select-box {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 0.9rem;
+}
+
+.table-option {
+    margin-bottom: 6px;
+}
+
+.table-option label {
+    cursor: pointer;
+}
+
+
+
+/*Dashbood css*/
+
+.dashboard-main {
+    max-width: 1300px;
+    margin: 40px auto;
+    padding: 0 20px 40px;
+}
+
+.dashboard-header {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.dashboard-header h1 {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.dashboard-subtitle {
+    font-size: 0.95rem;
+    color: #444;
+}
+
+/* management card*/
+.management-card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+}
+
+.management-list li {
+    margin-bottom: 10px;
+}
+
+.management-list .primary-link {
+    font-size: 0.95rem;
+}
+
+.dashboard-left .dashboard-card {
+    margin-bottom: 20px;
+}
+
+/* Metric card*/
+.metric-card {
+    padding: 12px;
+}
+
+.metric-number {
+    font-size: 1.9rem;
+}
+
+/*status table */
+.status-table td, .status-table th {
+    padding: 8px 12px;
+}
+
+/* Side-by-side layout for employee form rows */
+.employee-form .form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px; /* smaller font */
+}
+
+/* Align labels with consistent width */
+.employee-form .form-row label {
+    width: 120px;  
+    font-size: 13px;      /* smaller label text */
+    color: #444;
+}
+
+/* Input fields same width and aligned */
+.employee-form input[type="text"],
+.employee-form input[type="email"],
+.employee-form select {
+    flex: 1;
+    max-width: 150px;   /* match other dashboard inputs */
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+/* ===== Reservation Form Layout ===== */
+
+.reservation-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 0 20px 40px;
+}
+
+.reservation-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 28px 32px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+    border: 1px solid #eee;
+}
+
+.reservation-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 28px;
+}
+
+/* stack inputs vertically */
+.res-form-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 14px;
+}
+
+.res-form-row label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #444;
+}
+
+.res-form-row input,
+.res-form-row textarea,
+.res-form-row select {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+.res-form-row input:focus,
+.res-form-row textarea:focus {
+    outline: none;
+    border-color: #4a7ae5;
+    box-shadow: 0 0 4px rgba(74, 122, 229, 0.4);
+}
+
+.table-select-box {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f3f3f3;
+    border-radius: 8px;
+}
+
+.table-option {
+    margin: 4px 0;
+    font-size: 15px;
+}
+
+/* Submit button */
+.reservation-submit-btn {
+    margin-top: 10px;
+    padding: 12px 0;
+    font-size: 16px;
+    width: 100%;
+    background: #4a7ae5;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.reservation-submit-btn:hover {
+    opacity: 0.92;
+}
+
+/* Error box */
+.reservation-error {
+    background: #fde8e8;
+    padding: 10px 12px;
+    border: 1px solid #d9534f;
+    border-radius: 6px;
+    color: #c0392b;
+    margin-bottom: 12px;
+    font-size: 14px;
 }

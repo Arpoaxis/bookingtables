@@ -9,9 +9,9 @@
 </head>
 <body>
 
-<div class="home-link">
-    <jsp:include page="/WEB-INF/jsp/header.jsp" />
-</div>
+
+<jsp:include page="/WEB-INF/jsp/header.jsp" />
+
 <jsp:include page="/WEB-INF/jsp/admin/back_to_dashboard.jsp" />
 <div class="dashboard-container">
 

@@ -9,10 +9,8 @@
 </head>
 <body class="dashboard-body">
 
-<div class="home-link">
-    <jsp:include page="/WEB-INF/jsp/header.jsp" />
-</div>
-<jsp:include page="/WEB-INF/jsp/admin/back_to_dashboard.jsp" />
+<jsp:include page="/WEB-INF/jsp/header.jsp" />
+
 <div class="dashboard-main">
 
     <!-- Header -->
@@ -21,7 +19,7 @@
         <p class="dashboard-subtitle">
             Welcome,
             <strong>${sessionScope.user.firstName} ${sessionScope.user.lastName}</strong>
-            (<c:out value="${sessionScope.email}" />)
+            (<c:out value="${sessionScope.user.email}" />)
         </p>
     </div>
 
@@ -103,12 +101,11 @@
                         </a>
                     </li>
                     <li>
-    					<a class="primary-link"
-      						href="<c:url value='/admin/employees'/>">
-        					Manage employees
-    					</a>
-					</li>
-                    
+                        <a class="primary-link"
+                           href="<c:url value='/admin/employees'/>">
+                            Manage employees
+                        </a>
+                    </li>
                 </ul>
 
                 <hr class="management-separator"/>

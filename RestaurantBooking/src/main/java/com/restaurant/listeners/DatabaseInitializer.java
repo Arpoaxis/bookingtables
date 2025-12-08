@@ -146,13 +146,18 @@ public class DatabaseInitializer implements ServletContextListener {
                         CREATE TABLE IF NOT EXISTS restaurant_tables (
                             table_id INTEGER PRIMARY KEY AUTOINCREMENT,
                             restaurant_id INTEGER NOT NULL,
-                            table_number INTEGER NOT NULL UNIQUE,
+                            table_number INTEGER NOT NULL ,
                             min_capacity INTEGER NOT NULL CHECK(min_capacity >= 1),
                             max_capacity INTEGER NOT NULL CHECK(max_capacity >= min_capacity),
                             can_combine INTEGER NOT NULL CHECK(can_combine IN (0,1)),
                             FOREIGN KEY(restaurant_id) REFERENCES restaurants(restaurant_id)
                         );
                     """);
+                    
+                    stmt.executeUpdate("""
+                    	    CREATE UNIQUE INDEX IF NOT EXISTS idx_restaurant_table_unique
+                    	    ON restaurant_tables(restaurant_id, table_number);
+                    	""");
 
                     stmt.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS booking_tables (

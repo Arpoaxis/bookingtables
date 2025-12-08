@@ -49,6 +49,112 @@ public class BookingDao {
 		}
 	}
 
+	//CREATE BOOKING AND ASSIGN A TABLE 
+	// CREATE BOOKING AND ASSIGN A TABLE 
+	public static int createBookingWithTable(ServletContext ctx,
+	                                         Integer userId,
+	                                         int restaurantId,
+	                                         int guests,
+	                                         String date,
+	                                         String time,
+	                                         String requests,
+	                                         Integer tableId) throws Exception {
+
+	    String insertSql = """
+	            INSERT INTO bookings
+	            (user_id, restaurant_id, number_of_guests, booking_date, booking_time, special_requests)
+	            VALUES (?, ?, ?, ?, ?, ?)
+	            """;
+
+	    String insertLink = "INSERT INTO booking_tables (booking_id, table_id) VALUES (?, ?)";
+
+	    try (Connection conn = DatabaseUtility.getConnection(ctx)) {
+	        conn.setAutoCommit(false);
+	        try {
+	            // ---- ONLY CHECK OVERLAP IF A TABLE WAS CHOSEN ----
+	            if (tableId != null) {
+	                LocalTime newStart = LocalTime.parse(time.length() == 5 ? time + ":00" : time);
+	                LocalTime newEnd   = newStart.plusHours(1);
+
+	                System.out.println("[BookingDao] Checking table availability with:");
+	                System.out.println(" newStart = " + newStart);
+	                System.out.println(" newEnd   = " + newEnd);
+
+	                String checkSql = """
+	                    SELECT 1
+	                    FROM booking_tables bt
+	                    JOIN bookings b ON bt.booking_id = b.booking_id
+	                    WHERE bt.table_id = ?
+	                      AND b.booking_date = ?
+	                      AND time(b.booking_time) < time(?)
+	                      AND time(b.booking_time, '+1 hour') > time(?)
+	                      AND b.booking_status <> 'CANCELLED'
+	                    LIMIT 1
+	                """;
+
+	                try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
+	                    psCheck.setInt(1, tableId);          // safe: tableId is non-null here
+	                    psCheck.setString(2, date);
+	                    psCheck.setString(3, newEnd.toString());
+	                    psCheck.setString(4, newStart.toString());
+
+	                    try (ResultSet rs = psCheck.executeQuery()) {
+	                        if (rs.next()) {
+	                            System.out.println("[BookingDao] Table is already booked in this time window!");
+	                            throw new SQLException("TABLE_ALREADY_BOOKED");
+	                        }
+	                    }
+	                }
+	            }
+
+	            // ---- INSERT BOOKING ROW ----
+	            try (PreparedStatement ps     = conn.prepareStatement(insertSql);
+	                 PreparedStatement psLink = conn.prepareStatement(insertLink);
+	                 PreparedStatement psLast = conn.prepareStatement("SELECT last_insert_rowid()")) {
+
+	                int i = 1;
+	                if (userId == null) {
+	                    ps.setNull(i++, Types.INTEGER);
+	                } else {
+	                    ps.setInt(i++, userId);
+	                }
+
+	                ps.setInt(i++, restaurantId);
+	                ps.setInt(i++, guests);
+	                ps.setString(i++, date);
+	                ps.setString(i++, time);
+	                ps.setString(i++, requests);
+
+	                ps.executeUpdate();
+
+	                int bookingId;
+	                try (ResultSet rs = psLast.executeQuery()) {
+	                    rs.next();
+	                    bookingId = rs.getInt(1);
+	                }
+
+	                // ---- LINK TABLE IF ONE WAS CHOSEN ----
+	                if (tableId != null) {
+	                    psLink.setInt(1, bookingId);
+	                    psLink.setInt(2, tableId);
+	                    psLink.executeUpdate();
+	                }
+
+	                conn.commit();
+	                System.out.println("[BookingDao] Booking created id=" + bookingId + " (tableId=" + tableId + ")");
+	                return bookingId;
+	            }
+	        } catch (Exception ex) {
+	            conn.rollback();
+	            System.out.println("[BookingDao] createBookingWithTable failed: " + ex.getMessage());
+	            throw ex;
+	        } finally {
+	            conn.setAutoCommit(true);
+	        }
+	    }
+	}
+
+
 	// 2) VIEW BOOKINGS FOR A USER
 	public static List<Booking> getBookingsForUser(ServletContext ctx, int userId) throws Exception {
 		List<Booking> list = new ArrayList<>();
@@ -322,7 +428,7 @@ public class BookingDao {
 				// 2) Decide booking date & time
 				LocalDate today = LocalDate.now(ZoneId.of("America/Los_Angeles"));
 
-				// round current time to nearest half-hour slot for nicer demo
+				// round current time to nearest half-hour slot 
 				LocalTime now = LocalTime.now().withSecond(0).withNano(0);
 				int m = now.getMinute();
 				if (m < 15) {
@@ -433,7 +539,7 @@ public class BookingDao {
 	    }
 	}
 
-	// Map: booking_id -> (one) table_id for a given date (for display / dropdowns)
+	// table_id for a given date 
 	public Map<Integer, Integer> getPrimaryTableIdMapForDate(int restaurantId,
 	                                                         LocalDate date) throws SQLException {
 	    String sql = """

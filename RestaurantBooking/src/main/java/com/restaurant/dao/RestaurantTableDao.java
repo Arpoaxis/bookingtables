@@ -5,7 +5,7 @@ import com.restaurant.model.RestaurantTable;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.time.LocalTime;
 public class RestaurantTableDao {
 
     private final String dbPath;
@@ -19,17 +19,28 @@ public class RestaurantTableDao {
         return DriverManager.getConnection(url);
     }
 
+
+    // INSERT TABLE 
     public boolean addTable(RestaurantTable table) {
-        String checkSql = "SELECT COUNT(*) FROM restaurant_tables WHERE table_number = ?";
+
+        String checkSql = """
+            SELECT COUNT(*) 
+            FROM restaurant_tables 
+            WHERE restaurant_id = ? AND table_number = ?
+        """;
+
         String insertSql = """
-            INSERT INTO restaurant_tables (table_number, min_capacity, max_capacity, can_combine)
-            VALUES (?,?,?,?)
+            INSERT INTO restaurant_tables
+            (restaurant_id, table_number, min_capacity, max_capacity, can_combine)
+            VALUES (?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = getConnection()) {
-            // check duplicate number
+
+            // Duplicate check (PER RESTAURANT!)
             try (PreparedStatement check = conn.prepareStatement(checkSql)) {
-                check.setInt(1, table.getTableNumber());
+                check.setInt(1, table.getRestaurantId());
+                check.setInt(2, table.getTableNumber());
                 try (ResultSet rs = check.executeQuery()) {
                     if (rs.next() && rs.getInt(1) > 0) {
                         return false;
@@ -37,33 +48,33 @@ public class RestaurantTableDao {
                 }
             }
 
-            // insert new
+            // Perform insert
             try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
-                ps.setInt(1, table.getTableNumber());
-                ps.setInt(2, table.getMinCapacity());
-                ps.setInt(3, table.getMaxCapacity());
-                ps.setInt(4, table.isCanCombine() ? 1 : 0);
+                ps.setInt(1, table.getRestaurantId());
+                ps.setInt(2, table.getTableNumber());
+                ps.setInt(3, table.getMinCapacity());
+                ps.setInt(4, table.getMaxCapacity());
+                ps.setInt(5, table.isCanCombine() ? 1 : 0);
                 ps.executeUpdate();
             }
 
             return true;
+
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
 
+    // DELETE TABLE
     public boolean deleteTable(int tableId) {
-        String url = "jdbc:sqlite:" + dbPath;
-
         String sql = "DELETE FROM restaurant_tables WHERE table_id = ?";
 
-        try (Connection conn = DriverManager.getConnection(url);
+        try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, tableId);
-            int rows = ps.executeUpdate();
-            return rows > 0;
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -71,9 +82,10 @@ public class RestaurantTableDao {
         }
     }
 
+    // GET TABLE BY ID
     public RestaurantTable getTableById(int tableId) {
         String sql = """
-            SELECT table_id, table_number, min_capacity, max_capacity, can_combine
+            SELECT table_id, restaurant_id, table_number, min_capacity, max_capacity, can_combine
             FROM restaurant_tables
             WHERE table_id = ?
         """;
@@ -83,30 +95,96 @@ public class RestaurantTableDao {
 
             ps.setInt(1, tableId);
             try (ResultSet rs = ps.executeQuery()) {
+
                 if (rs.next()) {
-                    int id          = rs.getInt("table_id");
-                    int tableNumber = rs.getInt("table_number");
-                    int minCap      = rs.getInt("min_capacity");
-                    int maxCap      = rs.getInt("max_capacity");
-                    int canCombInt  = rs.getInt("can_combine");
-
-                    boolean canCombine = (canCombInt == 1);
-
                     return new RestaurantTable(
-                            id,
-                            tableNumber,
-                            minCap,
-                            maxCap,
-                            canCombine
+                        rs.getInt("table_id"),
+                        rs.getInt("restaurant_id"),
+                        rs.getInt("table_number"),
+                        rs.getInt("min_capacity"),
+                        rs.getInt("max_capacity"),
+                        rs.getInt("can_combine") == 1
                     );
                 }
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null; // not found or error
+
+        return null;
     }
 
+    // GET TABLES BY RESTAURANT
+    public List<RestaurantTable> getTablesByRestaurant(int restaurantId) {
+        String sql = """
+            SELECT table_id, restaurant_id, table_number, min_capacity, max_capacity, can_combine
+            FROM restaurant_tables
+            WHERE restaurant_id = ?
+            ORDER BY table_number
+        """;
+
+        List<RestaurantTable> result = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, restaurantId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new RestaurantTable(
+                        rs.getInt("table_id"),
+                        rs.getInt("restaurant_id"),
+                        rs.getInt("table_number"),
+                        rs.getInt("min_capacity"),
+                        rs.getInt("max_capacity"),
+                        rs.getInt("can_combine") == 1
+                    ));
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+
+    // GET ALL TABLES
+    public List<RestaurantTable> getAllTables() {
+        String sql = """
+            SELECT table_id, restaurant_id, table_number, min_capacity, max_capacity, can_combine
+            FROM restaurant_tables
+            ORDER BY restaurant_id, table_number
+        """;
+
+        List<RestaurantTable> result = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                result.add(new RestaurantTable(
+                    rs.getInt("table_id"),
+                    rs.getInt("restaurant_id"),
+                    rs.getInt("table_number"),
+                    rs.getInt("min_capacity"),
+                    rs.getInt("max_capacity"),
+                    rs.getInt("can_combine") == 1
+                ));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    // UPDATE TABLE
     public boolean updateTable(RestaurantTable table) {
         String sql = """
             UPDATE restaurant_tables
@@ -114,7 +192,7 @@ public class RestaurantTableDao {
                 min_capacity = ?,
                 max_capacity = ?,
                 can_combine  = ?
-            WHERE table_id   = ?
+            WHERE table_id = ?
         """;
 
         try (Connection conn = getConnection();
@@ -126,62 +204,124 @@ public class RestaurantTableDao {
             ps.setInt(4, table.isCanCombine() ? 1 : 0);
             ps.setInt(5, table.getTableId());
 
-            int rows = ps.executeUpdate();
-            return rows == 1;
+            return ps.executeUpdate() == 1;
+
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
-    
-    public List<RestaurantTable> getAllTables() {
-        String sql = """
-            SELECT table_id, table_number, min_capacity, max_capacity, can_combine
-            FROM restaurant_tables
-            ORDER BY table_number
-        """;
 
-        List<RestaurantTable> result = new ArrayList<>();
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                int id          = rs.getInt("table_id");
-                int tableNumber = rs.getInt("table_number");
-                int minCap      = rs.getInt("min_capacity");
-                int maxCap      = rs.getInt("max_capacity");
-                boolean canComb = rs.getInt("can_combine") == 1;
-
-                result.add(new RestaurantTable(id, tableNumber, minCap, maxCap, canComb));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-    
+    // REINSERT TABLE
     public boolean reinsertTable(RestaurantTable t) {
         String sql = """
-            INSERT INTO restaurant_tables (table_number, min_capacity, max_capacity, can_combine)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO restaurant_tables 
+            (restaurant_id, table_number, min_capacity, max_capacity, can_combine)
+            VALUES (?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, t.getTableNumber());
-            ps.setInt(2, t.getMinCapacity());
-            ps.setInt(3, t.getMaxCapacity());
-            ps.setInt(4, t.isCanCombine() ? 1 : 0);
+            ps.setInt(1, t.getRestaurantId());
+            ps.setInt(2, t.getTableNumber());
+            ps.setInt(3, t.getMinCapacity());
+            ps.setInt(4, t.getMaxCapacity());
+            ps.setInt(5, t.isCanCombine() ? 1 : 0);
 
             return ps.executeUpdate() == 1;
+
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
+ // get available tables for a specific restaurant
+    public List<RestaurantTable> getAvailableTables(int restaurantId, String date, String time, int guests) {
 
+        // Fix: ensure seconds always included (HH:mm:ss)
+        LocalTime start = LocalTime.parse(time.length() == 5 ? time + ":00" : time);
+        LocalTime end   = start.plusHours(1);
+        String startTime = start.toString(); // Always HH:mm:ss
+        String endTime   = end.toString();   // Always HH:mm:ss
 
-}
+        System.out.println("=== Checking available tables ===");
+        System.out.println("Restaurant ID: " + restaurantId);
+        System.out.println("Date: " + date);
+        System.out.println("Start: " + startTime);
+        System.out.println("End: " + endTime);
+        System.out.println("Guests: " + guests);
+
+        String sql = """
+            SELECT rt.*
+            FROM restaurant_tables rt
+            WHERE rt.restaurant_id = ?
+              AND rt.min_capacity <= ?
+              AND rt.max_capacity >= ?
+              AND rt.table_id NOT IN (
+                    SELECT bt.table_id
+                    FROM booking_tables bt
+                    JOIN bookings b ON bt.booking_id = b.booking_id
+                    WHERE b.restaurant_id = ?
+                      AND b.booking_date = ?
+                      AND time(b.booking_time) < time(?)
+                      AND time(b.booking_time, '+1 hour') > time(?)
+                      AND b.booking_status <> 'CANCELLED'
+              )
+            ORDER BY rt.table_number
+        """;
+
+        List<RestaurantTable> result = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            int i = 1;
+            ps.setInt(i++, restaurantId);
+            ps.setInt(i++, guests);      
+            ps.setInt(i++, guests);      
+
+            ps.setInt(i++, restaurantId);
+            ps.setString(i++, date);
+
+            ps.setString(i++, endTime);   
+            ps.setString(i++, startTime); 
+
+            System.out.println("SQL parameters set, executing query…");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new RestaurantTable(
+                        rs.getInt("table_id"),
+                        rs.getInt("restaurant_id"),
+                        rs.getInt("table_number"),
+                        rs.getInt("min_capacity"),
+                        rs.getInt("max_capacity"),
+                        rs.getInt("can_combine") == 1
+                    ));
+                }
+            }
+
+            System.out.println("Tables found: " + result.size());
+        }
+        catch (SQLException e) {
+            System.err.println("SQL ERROR in getAvailableTables():");
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+    // Find a single available table
+    public Integer findAvailableTable(int restaurantId, String date, String time, int guests) {
+
+        List<RestaurantTable> tables = getAvailableTables(restaurantId, date, time, guests);
+
+        if (tables.isEmpty()) {
+            return null; // no table available
+        }
+
+       
+        return tables.get(0).getTableId();
+    }
+    }

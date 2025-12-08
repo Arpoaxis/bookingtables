@@ -10,10 +10,13 @@
     <link rel="stylesheet" href="<c:url value='/css/style.css'/>">
 </head>
 <body class="dashboard-body">
+	<%-- Access control: only ADMIN or MANAGER allowed --%>
+	<c:if test="${sessionScope.role != 'ADMIN' and sessionScope.role != 'MANAGER'}">
+	    <jsp:forward page="/WEB-INF/jsp/errors/403.jsp"/>
+	</c:if>
 
-<div class="home-link">
-    <jsp:include page="/WEB-INF/jsp/header.jsp" />
-</div>
+<jsp:include page="/WEB-INF/jsp/header.jsp" />
+
 <jsp:include page="/WEB-INF/jsp/admin/back_to_dashboard.jsp" />
 <div class="dashboard-main">
 
@@ -57,98 +60,114 @@
     <div class="dashboard-card wide-card">
 
         <!-- Filter/search bar -->
-        <form method="get"
-              action="<c:url value='/admin/employees'/>"
-              class="employee-filter-form">
-            <div class="form-row">
-                <label>Search</label>
-                <input type="text" name="q"
-                       value="${fn:escapeXml(param.q)}"
-                       placeholder="Name or email">
-            </div>
-
-            <div class="form-row">
-                <label>Role</label>
-                <select name="role">
-                    <option value="ALL">All</option>
-                    <option value="EMPLOYEE" <c:if test="${param.role == 'EMPLOYEE'}">selected</c:if>>Employee</option>
-                    <option value="HOST"     <c:if test="${param.role == 'HOST'}">selected</c:if>>Host</option>
-                    <option value="MANAGER"  <c:if test="${param.role == 'MANAGER'}">selected</c:if>>Manager</option>
-                </select>
-            </div>
-
-            <div class="form-row">
-                <label>Status</label>
-                <select name="active">
-                    <option value="all"
-                        <c:if test="${param.active == 'all' || empty param.active}">selected</c:if>>
-                        All
-                    </option>
-                    <option value="active"
-                        <c:if test="${param.active == 'active'}">selected</c:if>>
-                        Active
-                    </option>
-                    <option value="inactive"
-                        <c:if test="${param.active == 'inactive'}">selected</c:if>>
-                        Inactive
-                    </option>
-                </select>
-            </div>
-
-            <div class="form-row">
-                <button type="submit" class="primary-link button-link">
-                    Apply filters
-                </button>
-            </div>
-        </form>
-
-        <hr style="margin: 1.5rem 0;">
+		<form method="get"
+		      action="<c:url value='/admin/employees'/>"
+		      class="employee-filter-form">
+		
+		    <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end;">
+		
+		        <!-- Search -->
+		        <div class="form-row">
+		            <label>Search</label>
+		            <input type="text" name="q"
+		                   value="${fn:escapeXml(param.q)}"
+		                   placeholder="Name or email">
+		        </div>
+		
+		        <!-- Role filter -->
+		        <div class="form-row">
+		            <label>Role</label>
+		            <select name="role">
+		                <option value="ALL">All</option>
+		                <option value="EMPLOYEE" <c:if test="${param.role == 'EMPLOYEE'}">selected</c:if>>Employee</option>
+		                <option value="HOST"     <c:if test="${param.role == 'HOST'}">selected</c:if>>Host</option>
+		                <option value="MANAGER"  <c:if test="${param.role == 'MANAGER'}">selected</c:if>>Manager</option>
+		            </select>
+		        </div>
+		
+		        <!-- Status filter -->
+		        <div class="form-row">
+		            <label>Status</label>
+		            <select name="active">
+		                <option value="all"
+		                    <c:if test="${param.active == 'all' || empty param.active}">selected</c:if>>
+		                    All
+		                </option>
+		                <option value="active"
+		                    <c:if test="${param.active == 'active'}">selected</c:if>>
+		                    Active
+		                </option>
+		                <option value="inactive"
+		                    <c:if test="${param.active == 'inactive'}">selected</c:if>>
+		                    Inactive
+		                </option>
+		            </select>
+		        </div>
+		
+		        <!-- Buttons row -->
+		        <div class="form-row" style="display:flex; gap:12px;">
+		            <button type="submit" class="primary-link button-link">
+		                Apply filters
+		            </button>
+		
+		            <a href="<c:url value='/admin/employees'/>"
+		               class="primary-link button-link">
+		               Clear filters
+		            </a>
+		        </div>
+		    </div>
+		</form>
 
         <!-- New employee form -->
-        <h2 style="margin-top:0;">Add new employee</h2>
-        <form method="post" action="<c:url value='/admin/employees'/>" class="employee-form">
-            <!-- CSRF -->
-            <input type="hidden" name="csrf_token"
-                   value="${sessionScope.csrf_token}" />
+        <hr style="margin: 2rem 0;">
 
-            <div class="form-row">
-                <label>First name</label>
-                <input type="text" name="first_name" required>
-            </div>
-
-            <div class="form-row">
-                <label>Last name</label>
-                <input type="text" name="last_name" required>
-            </div>
-
-            <div class="form-row">
-                <label>Email</label>
-                <input type="email" name="email" required>
-            </div>
-
-            <div class="form-row">
-                <label>Phone</label>
-                <input type="text" name="phoneNumber" required>
-            </div>
-
-            <div class="form-row">
-                <label>Role</label>
-                <select name="role">
-                    <option value="EMPLOYEE">Employee</option>
-                    <option value="HOST">Host</option>
-                    <option value="MANAGER">Manager</option>
-                </select>
-            </div>
-
-            <div class="form-row">
-                <button type="submit"
-                        name="action"
-                        value="create"
-                        class="primary-link button-link">
-                    Create employee
-                </button>
-            </div>
-        </form>
+		<h2 style="margin-top:0;">Add new employee</h2>
+		
+		<form method="post"
+		      action="<c:url value='/admin/employees'/>"
+		      class="employee-form"
+		      style="max-width: 400px;">
+		
+		    <input type="hidden" name="csrf_token" value="${sessionScope.csrf_token}" />
+		
+		    <div class="form-row">
+		        <label>First name</label>
+		        <input type="text" name="first_name" required>
+		    </div>
+		
+		    <div class="form-row">
+		        <label>Last name</label>
+		        <input type="text" name="last_name" required>
+		    </div>
+		
+		    <div class="form-row">
+		        <label>Email</label>
+		        <input type="email" name="email" required>
+		    </div>
+		
+		    <div class="form-row">
+		        <label>Phone</label>
+		        <input type="text" name="phoneNumber" required>
+		    </div>
+		
+		    <div class="form-row">
+		        <label>Role</label>
+		        <select name="role">
+		            <option value="EMPLOYEE">Employee</option>
+		            <option value="HOST">Host</option>
+		            <option value="MANAGER">Manager</option>
+		        </select>
+		    </div>
+		
+		    <div class="form-row" style="margin-top: 10px;">
+		        <button type="submit"
+		                name="action"
+		                value="create"
+		                class="primary-link button-link">
+		            Create employee
+		        </button>
+		    </div>
+		</form>
 
         <hr style="margin: 2rem 0;">
 
@@ -296,15 +315,16 @@
 
     </div>
 
-    <!-- Back link -->
-    <div style="margin-top: 1rem;">
-        <a class="primary-link"
-           href="<c:url value='/admin/dashboard'/>">
-            &larr; Back to dashboard
-        </a>
-    </div>
+ 
 
 </div><!-- /dashboard-main -->
 
 </body>
+<style>
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+</style>
 </html>
