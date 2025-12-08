@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -99,10 +100,54 @@ public class StaffDashboardServlet extends HttpServlet {
 			List<RestaurantTable> tables = tableDao.getAllTables();
 
 			// per-table status for colouring the plan
-			Map<Integer, String> tableStatusMap = bookingDao.getTableStatusMap(restaurantId, todayStr);
+			Map<Integer, String> tableStatusMap =
+			        bookingDao.getTableStatusMap(restaurantId, todayStr);
 
-			// NEW: booking -> (one) table mapping, for the dropdown/drag UI
-			Map<Integer, Integer> bookingTableMap = bookingDao.getPrimaryTableIdMapForDate(restaurantId, today);
+			// booking -> (one) table mapping, for the dropdown/drag UI
+			Map<Integer, Integer> bookingTableMap =
+			        bookingDao.getPrimaryTableIdMapForDate(restaurantId, today);
+
+			// ===== NEW: tableId -> surname label for mini floor plan =====
+			Map<Integer, String> tableNameMap  = new HashMap<>();
+			Map<Integer, Integer> tableRankMap = new HashMap<>();
+
+			for (Booking b : todaysBookings) {
+			    Integer tableId = bookingTableMap.get(b.getBookingId());
+			    if (tableId == null) {
+			        continue; // no table assigned
+			    }
+
+			    String status = b.getStatus();
+			    if ("CANCELLED".equals(status)) {
+			        continue; // don't show cancelled bookings on the table
+			    }
+
+			    // priority: SEATED > CONFIRMED > PENDING > others
+			    int rank;
+			    switch (status) {
+			        case "SEATED":
+			            rank = 1; break;
+			        case "CONFIRMED":
+			            rank = 2; break;
+			        case "PENDING":
+			            rank = 3; break;
+			        default:
+			            rank = 4; break;
+			    }
+
+			    Integer existingRank = tableRankMap.get(tableId);
+			    if (existingRank == null || rank < existingRank) {
+			        tableRankMap.put(tableId, rank);
+
+			        String last = b.getCustomerLastName();
+			        if (last == null || last.isBlank()) {
+			            last = b.getCustomerFirstName();
+			        }
+			        tableNameMap.put(tableId, last);
+			    }
+			}
+			// ===== END NEW BLOCK =====
+
 
 			// Put things on the request for the JSP
 			request.setAttribute("sort", sort);
@@ -117,6 +162,7 @@ public class StaffDashboardServlet extends HttpServlet {
 			request.setAttribute("allTables", tables); // convenience alias
 			request.setAttribute("tableStatusMap", tableStatusMap);
 			request.setAttribute("bookingTableMap", bookingTableMap);
+			request.setAttribute("tableNameMap", tableNameMap);
 
 			request.getRequestDispatcher("/WEB-INF/jsp/staff/staff_dashboard.jsp").forward(request, response);
 

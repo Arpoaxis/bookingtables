@@ -61,18 +61,36 @@
 										<c:set var="status" value="${tableStatusMap[t.tableId]}" />
 										<c:set var="statusClass"
 											value="${status != null ? fn:toLowerCase(status) : 'available'}" />
+										<c:set var="label" value="${tableNameMap[t.tableId]}" />
+
 										<div
 											class="table-node table-interactive status-${statusClass}"
 											data-table-id="${t.tableId}"
 											data-table-number="${t.tableNumber}"
 											title="Table ${t.tableNumber} (${t.minCapacity}-${t.maxCapacity})"
 											onclick="window.location.href='<c:url value="/admin/floor_plan"/>';">
+
 											<div class="table-node-number">T${t.tableNumber}</div>
 											<div class="table-node-cap">${t.minCapacity}&ndash;${t.maxCapacity}</div>
-											<c:if test="${status != null}">
-												<div class="table-node-status">${status}</div>
-											</c:if>
+
+											<c:choose>
+												<c:when test="${not empty label}">
+													<div class="table-node-status">
+														<c:out value="${label}" />
+													</div>
+												</c:when>
+
+												<c:otherwise>
+													<c:if test="${status != null}">
+														<div class="table-node-status">
+															<c:out value="${status}" />
+														</div>
+													</c:if>
+												</c:otherwise>
+											</c:choose>
 										</div>
+
+
 									</c:if>
 								</c:forEach>
 							</div>
@@ -89,18 +107,36 @@
 										<c:set var="status" value="${tableStatusMap[t.tableId]}" />
 										<c:set var="statusClass"
 											value="${status != null ? fn:toLowerCase(status) : 'available'}" />
+										<c:set var="label" value="${tableNameMap[t.tableId]}" />
+
 										<div
 											class="table-node table-interactive status-${statusClass}"
 											data-table-id="${t.tableId}"
 											data-table-number="${t.tableNumber}"
 											title="Table ${t.tableNumber} (${t.minCapacity}-${t.maxCapacity})"
 											onclick="window.location.href='<c:url value="/admin/floor_plan"/>';">
+
 											<div class="table-node-number">T${t.tableNumber}</div>
 											<div class="table-node-cap">${t.minCapacity}&ndash;${t.maxCapacity}</div>
-											<c:if test="${status != null}">
-												<div class="table-node-status">${status}</div>
-											</c:if>
+
+											<c:choose>
+												<c:when test="${not empty label}">
+													<div class="table-node-status">
+														<c:out value="${label}" />
+													</div>
+												</c:when>
+
+												<c:otherwise>
+													<c:if test="${status != null}">
+														<div class="table-node-status">
+															<c:out value="${status}" />
+														</div>
+													</c:if>
+												</c:otherwise>
+											</c:choose>
 										</div>
+
+
 									</c:if>
 								</c:forEach>
 							</div>
@@ -115,18 +151,36 @@
 										<c:set var="status" value="${tableStatusMap[t.tableId]}" />
 										<c:set var="statusClass"
 											value="${status != null ? fn:toLowerCase(status) : 'available'}" />
+										<c:set var="label" value="${tableNameMap[t.tableId]}" />
+
 										<div
 											class="table-node table-interactive status-${statusClass}"
 											data-table-id="${t.tableId}"
 											data-table-number="${t.tableNumber}"
 											title="Table ${t.tableNumber} (${t.minCapacity}-${t.maxCapacity})"
 											onclick="window.location.href='<c:url value="/admin/floor_plan"/>';">
+
 											<div class="table-node-number">T${t.tableNumber}</div>
 											<div class="table-node-cap">${t.minCapacity}&ndash;${t.maxCapacity}</div>
-											<c:if test="${status != null}">
-												<div class="table-node-status">${status}</div>
-											</c:if>
+
+											<c:choose>
+												<c:when test="${not empty label}">
+													<div class="table-node-status">
+														<c:out value="${label}" />
+													</div>
+												</c:when>
+
+												<c:otherwise>
+													<c:if test="${status != null}">
+														<div class="table-node-status">
+															<c:out value="${status}" />
+														</div>
+													</c:if>
+												</c:otherwise>
+											</c:choose>
 										</div>
+
+
 									</c:if>
 								</c:forEach>
 							</div>
