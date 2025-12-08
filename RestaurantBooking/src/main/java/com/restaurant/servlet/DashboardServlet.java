@@ -1,21 +1,26 @@
 package com.restaurant.servlet;
+
+import com.restaurant.dao.BookingDao;
+import com.restaurant.model.Booking;
 import com.restaurant.model.User;
-
-
+import com.restaurant.util.DatabaseUtility;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.LinkedHashMap;
-
-import com.restaurant.util.DatabaseUtility;
+import java.util.List;
+import java.util.Map;
 
 @WebServlet("/admin/dashboard")
 public class DashboardServlet extends HttpServlet {
@@ -39,8 +44,7 @@ public class DashboardServlet extends HttpServlet {
 
         String role = (String) session.getAttribute("role");
         if (role == null ||
-                !(role.equalsIgnoreCase("ADMIN")
-               || role.equalsIgnoreCase("MANAGER"))) {
+                !(role.equalsIgnoreCase("ADMIN") || role.equalsIgnoreCase("MANAGER"))) {
             // Only admins & managers can see /admin/dashboard
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
             return;
@@ -52,24 +56,25 @@ public class DashboardServlet extends HttpServlet {
             restaurantId = (Integer) session.getAttribute("restaurantId");
         }
 
+        // ---- Top-level metrics ----
         try (Connection conn = DatabaseUtility.getConnection(getServletContext())) {
 
             // total bookings for this restaurant (or all if null)
             String totalSql = (restaurantId != null)
-                ? "SELECT COUNT(*) FROM bookings WHERE restaurant_id = ?"
-                : "SELECT COUNT(*) FROM bookings";
+                    ? "SELECT COUNT(*) FROM bookings WHERE restaurant_id = ?"
+                    : "SELECT COUNT(*) FROM bookings";
             long totalBookings = runCount(conn, totalSql, restaurantId);
 
             // bookings today for this restaurant
             String todaySql = (restaurantId != null)
-                ? "SELECT COUNT(*) FROM bookings WHERE booking_date = date('now') AND restaurant_id = ?"
-                : "SELECT COUNT(*) FROM bookings WHERE booking_date = date('now')";
+                    ? "SELECT COUNT(*) FROM bookings WHERE booking_date = date('now') AND restaurant_id = ?"
+                    : "SELECT COUNT(*) FROM bookings WHERE booking_date = date('now')";
             long bookingsToday = runCount(conn, todaySql, restaurantId);
 
             // distinct customers
             String distinctSql = (restaurantId != null)
-                ? "SELECT COUNT(DISTINCT user_id) FROM bookings WHERE user_id IS NOT NULL AND restaurant_id = ?"
-                : "SELECT COUNT(DISTINCT user_id) FROM bookings WHERE user_id IS NOT NULL";
+                    ? "SELECT COUNT(DISTINCT user_id) FROM bookings WHERE user_id IS NOT NULL AND restaurant_id = ?"
+                    : "SELECT COUNT(DISTINCT user_id) FROM bookings WHERE user_id IS NOT NULL";
             long distinctCustomers = runCount(conn, distinctSql, restaurantId);
 
             // status counts
@@ -85,14 +90,35 @@ public class DashboardServlet extends HttpServlet {
             req.setAttribute("reportError", "Unable to load dashboard statistics.");
         }
 
+        // ---- Optional bookings list when user clicks a metric ----
+        String view = req.getParameter("view"); // "all" or "today"
+        List<Booking> bookings = null;
+
+        if (restaurantId != null && view != null && !view.isBlank()) {
+            try {
+                BookingDao bookingDao = new BookingDao(getServletContext());
+
+                if ("today".equalsIgnoreCase(view)) {
+                    LocalDate today = LocalDate.now(ZoneId.of("America/Los_Angeles"));
+                    bookings = bookingDao.findBookingsForDate(restaurantId, today);
+                } else if ("all".equalsIgnoreCase(view)) {
+                    bookings = bookingDao.findBookingsForRestaurant(restaurantId);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                req.setAttribute("reportError", "Could not load bookings list.");
+            }
+        }
+
+        req.setAttribute("bookings", bookings);
+
+        // Single forward to the dashboard JSP
         req.getRequestDispatcher("/WEB-INF/jsp/admin/dashboard.jsp")
            .forward(req, resp);
     }
 
-
-
     /**
-     * Helper method to execute a simple SELECT COUNT(*) ... query.
+     * Helper for SELECT COUNT(*).
      */
     private long runCount(Connection conn, String sql, Integer restaurantId) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -107,8 +133,6 @@ public class DashboardServlet extends HttpServlet {
 
     /**
      * Load counts of bookings grouped by status.
-     * Ensures we always return all four known statuses,
-     * even if some are zero.
      */
     private Map<String, Long> loadStatusCounts(Connection conn, Integer restaurantId) throws SQLException {
         String sql;
@@ -150,6 +174,4 @@ public class DashboardServlet extends HttpServlet {
         }
         return result;
     }
-
-
 }

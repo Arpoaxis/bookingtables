@@ -155,17 +155,26 @@ function loadTables() {
                 return;
             }
 
-            data.forEach(t => {
-                const div = document.createElement("div");
+            data.forEach(function (t) {
+                // handle both camelCase and snake_case coming from JSON
+                var tableId     = (t.tableId     != null) ? t.tableId     : t.table_id;
+                var tableNumber = (t.tableNumber != null) ? t.tableNumber : t.table_number;
+                var minCapacity = (t.minCapacity != null) ? t.minCapacity : t.min_capacity;
+                var maxCapacity = (t.maxCapacity != null) ? t.maxCapacity : t.max_capacity;
+
+                var div = document.createElement("div");
                 div.className = "table-option";
-                div.innerHTML = `
-                    <label>
-                        <input type="radio" name="tableId" value="${t.tableId}">
-                        Table #${t.tableNumber} — Seats ${t.minCapacity}-${t.maxCapacity}
-                    </label>
-                `;
+
+                div.innerHTML =
+                    '<label>' +
+                        '<input type="radio" name="tableId" value="' + tableId + '">' +
+                        'Table #' + tableNumber + ' — Seats ' + minCapacity + '-' + maxCapacity +
+                    '</label>';
+
                 container.appendChild(div);
             });
+
+
         })
         .catch(err => {
             console.error("API ERROR:", err);

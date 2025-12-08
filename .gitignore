@@ -32,3 +32,4 @@ WEB-INF/database/
 *.local
 RestaurantBooking/src/main/resources/email.properties
 
+RestaurantBooking/doc/

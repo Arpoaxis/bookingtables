@@ -3,12 +3,10 @@ package com.restaurant.servlet;
 import com.restaurant.dao.RestaurantTableDao;
 import com.restaurant.model.RestaurantTable;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
 @WebServlet("/api/available-tables")

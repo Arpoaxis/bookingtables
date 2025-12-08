@@ -22,16 +22,17 @@ body {
 	padding: 20px;
 	margin: 20px;
 }
+
 .forgot-password-link {
-    color: #4a7ae5;         
-    text-decoration: none;   
-    font-size: 14px;
-    cursor: pointer;
+	color: #4a7ae5;
+	text-decoration: none;
+	font-size: 14px;
+	cursor: pointer;
 }
 
 .forgot-password-link:hover {
-    text-decoration: underline;
-    color: #2f5ec9;          
+	text-decoration: underline;
+	color: #2f5ec9;
 }
 
 .input-row {
@@ -309,12 +310,31 @@ body {
 	margin: 0 0 24px;
 	color: #444;
 	font-size: 0.95rem;
-} /* two-column layout: left = metrics + status, right = management */
+}
+
+/* === STAFF DASHBOARD LAYOUT ===================================== */
+
+/* Left–right layout for floor plan + bookings */
 .dashboard-grid {
-	display: grid;
-	grid-template-columns: 3fr 2fr; /* bookings column a bit wider */
-	grid-gap: 20px;
-} /* generic card */
+	display: flex; /* override any grid layout */
+	gap: 24px;
+	align-items: stretch; /* make children equal height */
+}
+
+/* Each column is a flex container */
+.dashboard-grid>div {
+	flex: 1 1 0;
+	display: flex;
+}
+
+/* The top-level cards in each column fill the column height */
+.dashboard-grid>div>.dashboard-card.wide-card {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+}
+
+/* generic card */
 .dashboard-card {
 	background: #ffffff;
 	border-radius: 6px;
@@ -348,7 +368,39 @@ body {
 	margin: 0;
 	font-size: 1.8rem;
 	font-weight: bold;
-} /* bookings by status table */
+}
+/* Make metric cards look clickable and give them a bit more air */
+.metric-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.metric-card-clickable {
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.metric-card-clickable:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+    transform: translateY(-2px);
+}
+.metric-number .metric-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.metric-number .metric-link:hover {
+    text-decoration: underline;
+}
+
+
+/* Slightly more gap so the row feels less cramped */
+.dashboard-cards-row {
+    grid-gap: 16px;
+}
+
+/* bookings by status table */
 .status-table {
 	width: 100%;
 	border-collapse: collapse;
@@ -401,13 +453,14 @@ body {
 	text-decoration: underline;
 } /* responsive: stack columns on smaller screens */
 @media ( max-width : 900px) {
-	.dashboard-grid {
-		grid-template-columns: 1fr;
-	}
-	.dashboard-cards-row {
-		grid-template-columns: 1fr;
-	}
-} /* ===== Floor Plan Layout (visual room) ===== */
+    .dashboard-grid {
+        flex-direction: column;   /* stack floor plan and bookings */
+    }
+    .dashboard-cards-row {
+        grid-template-columns: 1fr;
+    }
+}
+/* ===== Floor Plan Layout (visual room) ===== */
 .floorplan-main {
 	max-width: 1200px;
 	margin: 40px auto;
@@ -482,7 +535,12 @@ body {
 	padding: 20px 24px 16px;
 	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
 	border: 1px solid #ddd;
-} /* each row represents a physical row of tables */
+}
+/* Let the mini floor plan fill the left card */
+.floorplan-mini-room.floorplan-room {
+	flex: 1 1 auto;
+}
+/* each row represents a physical row of tables */
 .floor-row {
 	display: flex;
 	align-items: center;
@@ -619,7 +677,7 @@ body {
 	font-size: 0.7rem;
 	margin-top: 2px;
 	font-weight: bold;
-	text-transform: uppercase;
+	text-transform: none;
 } /* back wall label */
 .floor-back-wall {
 	margin-top: 20px;
@@ -655,8 +713,8 @@ body {
 	flex-direction: column;
 	align-items: center;
 }
-	/* Reuse existing auth card styles for the center box (already defined) */
-	/* Restaurant list under the card */
+/* Reuse existing auth card styles for the center box (already defined) */
+/* Restaurant list under the card */
 .restaurant-list-container {
 	width: 100%;
 	margin-top: 24px;
@@ -741,7 +799,6 @@ body {
 	justify-content: space-between;
 	padding: 12px 24px;
 	box-sizing: border-box;
-
 }
 
 .header-left .header-logo {
@@ -1094,31 +1151,8 @@ body {
 		width: 95%;
 		margin: 10% auto;
 	}
-} /* Scrollable bookings table on staff dashboard */
-.bookings-scroll {
-	max-height: 260px; /* tweak this until you see ~8 rows */
-	overflow-y: auto; /* scroll when content taller than 260px */
-	overflow-x: hidden;
-} /* Bookings card: fixed height, inner content scrolls */
-.bookings-card {
-	display: flex;
-	flex-direction: column;
-	max-height: 480px; /* adjust until it feels right */
-} /* Scrollable bookings table on staff dashboard */
-.bookings-card .bookings-scroll {
-	flex: 1; /* take remaining space in the card */
-	min-height: 0;
-	max-height: none; /* flex takes care of height now */
-	overflow-y: auto;
-	overflow-x: hidden;
-	margin-top: 8px;
-	border-top: 1px solid #eee; /* subtle visual separation */
-} /* Optional: always show scrollbar on desktops */
-@media ( pointer : fine) {
-	.bookings-card .bookings-scroll {
-		overflow-y: scroll;
-	}
-} /* Embedded floor plan on staff dashboard */
+}
+/* Embedded floor plan on staff dashboard */
 .floorplan-embed-wrapper {
 	margin-top: 8px;
 	height: 430px; /* tweak this if you want it taller/shorter */
@@ -1213,214 +1247,232 @@ body {
 }
 
 /* === Staff dashboard visual tweaks (safe overrides) === */
+/* Bookings card fills its column; bookings list scrolls */
+/* === Staff dashboard visual tweaks (safe overrides) === */
+/* Bookings card: normal flex column */
 .bookings-card {
     display: flex;
     flex-direction: column;
-    min-height: 430px;   /* make card closer to floor plan height */
 }
 
-.bookings-card .bookings-scroll {
-    flex: 1;
-    min-height: 0;
-    max-height: none;    /* let it grow inside the card */
+/* Inner bookings list: fixed max height + its own scrollbar */
+.bookings-scroll {
+    margin-top: 1rem;
+    max-height: 580px;      /* <— adjust this number to taste */
     overflow-y: auto;
     overflow-x: hidden;
+    border-top: 1px solid #eee;
+}
+
+/* Optional: always show scrollbar on desktops */
+@media (pointer: fine) {
+    .bookings-scroll {
+        overflow-y: scroll;
+    }
+}
+
+
+/* Optional: always show scrollbar on desktops */
+@media ( pointer : fine) {
+    .bookings-scroll {
+        overflow-y: scroll;
+    }
+}
+
+/* Optional: sticky header for bookings table */
+.booking-table thead th {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 1;
 }
 
 /* Reservation form tweaks */
 .reservation-form textarea.reservation-requests {
-    resize: none;      /* user cannot grow/shrink it */
-    overflow-y: auto;  /* scroll if more than ~3 lines */
+	resize: none; /* user cannot grow/shrink it */
+	overflow-y: auto; /* scroll if more than ~3 lines */
 }
 
 /* Table options under "pick a table" */
 .table-select-box {
-    margin-top: 12px;
-    padding: 10px 12px;
-    background: #f9f9f9;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    font-size: 0.9rem;
+	margin-top: 12px;
+	padding: 10px 12px;
+	background: #f9f9f9;
+	border-radius: 6px;
+	border: 1px solid #ddd;
+	font-size: 0.9rem;
 }
 
 .table-option {
-    margin-bottom: 6px;
+	margin-bottom: 6px;
 }
 
 .table-option label {
-    cursor: pointer;
+	cursor: pointer;
 }
 
-
-
 /*Dashbood css*/
-
 .dashboard-main {
-    max-width: 1300px;
-    margin: 40px auto;
-    padding: 0 20px 40px;
+	max-width: 1300px;
+	margin: 40px auto;
+	padding: 0 20px 40px;
 }
 
 .dashboard-header {
-    text-align: left;
-    margin-bottom: 20px;
+	text-align: left;
+	margin-bottom: 20px;
 }
 
 .dashboard-header h1 {
-    font-size: 28px;
-    margin-bottom: 6px;
+	font-size: 28px;
+	margin-bottom: 6px;
 }
 
 .dashboard-subtitle {
-    font-size: 0.95rem;
-    color: #444;
+	font-size: 0.95rem;
+	color: #444;
 }
 
 /* management card*/
 .management-card h2 {
-    font-size: 1.1rem;
-    margin-bottom: 12px;
+	font-size: 1.1rem;
+	margin-bottom: 12px;
 }
 
 .management-list li {
-    margin-bottom: 10px;
+	margin-bottom: 10px;
 }
 
 .management-list .primary-link {
-    font-size: 0.95rem;
+	font-size: 0.95rem;
 }
 
 .dashboard-left .dashboard-card {
-    margin-bottom: 20px;
+	margin-bottom: 20px;
 }
 
 /* Metric card*/
 .metric-card {
-    padding: 12px;
+	padding: 12px;
 }
 
 .metric-number {
-    font-size: 1.9rem;
+	font-size: 1.9rem;
 }
 
 /*status table */
 .status-table td, .status-table th {
-    padding: 8px 12px;
+	padding: 8px 12px;
 }
 
 /* Side-by-side layout for employee form rows */
 .employee-form .form-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-    font-size: 14px; /* smaller font */
+	display: flex;
+	align-items: center;
+	margin-bottom: 8px;
+	font-size: 14px; /* smaller font */
 }
 
 /* Align labels with consistent width */
 .employee-form .form-row label {
-    width: 120px;  
-    font-size: 13px;      /* smaller label text */
-    color: #444;
+	width: 120px;
+	font-size: 13px; /* smaller label text */
+	color: #444;
 }
 
 /* Input fields same width and aligned */
-.employee-form input[type="text"],
-.employee-form input[type="email"],
-.employee-form select {
-    flex: 1;
-    max-width: 150px;   /* match other dashboard inputs */
-    padding: 6px 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+.employee-form input[type="text"], .employee-form input[type="email"],
+	.employee-form select {
+	flex: 1;
+	max-width: 150px; /* match other dashboard inputs */
+	padding: 6px 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
 }
 /* ===== Reservation Form Layout ===== */
-
 .reservation-container {
-    max-width: 700px;
-    margin: 40px auto;
-    padding: 0 20px 40px;
+	max-width: 700px;
+	margin: 40px auto;
+	padding: 0 20px 40px;
 }
 
 .reservation-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 28px 32px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
-    border: 1px solid #eee;
+	background: #ffffff;
+	border-radius: 12px;
+	padding: 28px 32px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+	border: 1px solid #eee;
 }
 
 .reservation-title {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 28px;
+	margin-top: 0;
+	margin-bottom: 20px;
+	font-size: 28px;
 }
 
 /* stack inputs vertically */
 .res-form-row {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 14px;
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 14px;
 }
 
 .res-form-row label {
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #444;
+	margin-bottom: 5px;
+	font-weight: bold;
+	color: #444;
 }
 
-.res-form-row input,
-.res-form-row textarea,
-.res-form-row select {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
+.res-form-row input, .res-form-row textarea, .res-form-row select {
+	width: 100%;
+	padding: 8px 10px;
+	border-radius: 4px;
+	border: 1px solid #ccc;
+	box-sizing: border-box;
 }
 
-.res-form-row input:focus,
-.res-form-row textarea:focus {
-    outline: none;
-    border-color: #4a7ae5;
-    box-shadow: 0 0 4px rgba(74, 122, 229, 0.4);
+.res-form-row input:focus, .res-form-row textarea:focus {
+	outline: none;
+	border-color: #4a7ae5;
+	box-shadow: 0 0 4px rgba(74, 122, 229, 0.4);
 }
 
 .table-select-box {
-    margin-top: 16px;
-    padding: 16px;
-    background: #f3f3f3;
-    border-radius: 8px;
+	margin-top: 16px;
+	padding: 16px;
+	background: #f3f3f3;
+	border-radius: 8px;
 }
 
 .table-option {
-    margin: 4px 0;
-    font-size: 15px;
+	margin: 4px 0;
+	font-size: 15px;
 }
 
 /* Submit button */
 .reservation-submit-btn {
-    margin-top: 10px;
-    padding: 12px 0;
-    font-size: 16px;
-    width: 100%;
-    background: #4a7ae5;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
+	margin-top: 10px;
+	padding: 12px 0;
+	font-size: 16px;
+	width: 100%;
+	background: #4a7ae5;
+	color: #fff;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
 }
 
 .reservation-submit-btn:hover {
-    opacity: 0.92;
+	opacity: 0.92;
 }
 
 /* Error box */
 .reservation-error {
-    background: #fde8e8;
-    padding: 10px 12px;
-    border: 1px solid #d9534f;
-    border-radius: 6px;
-    color: #c0392b;
-    margin-bottom: 12px;
-    font-size: 14px;
+	background: #fde8e8;
+	padding: 10px 12px;
+	border: 1px solid #d9534f;
+	border-radius: 6px;
+	color: #c0392b;
+	margin-bottom: 12px;
+	font-size: 14px;
 }
