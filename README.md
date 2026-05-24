@@ -3,5 +3,5 @@ Team Members:
 - Gerard McCallion
 - David Sanchez
 - Allen Tran
-- Henry Lee
+- Henry Le
 - Hubert Nguyen
