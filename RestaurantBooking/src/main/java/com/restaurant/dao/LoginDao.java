@@ -45,20 +45,10 @@ public class LoginDao {
                         String storedPassword = rs.getString("password");
                         String roleName       = rs.getString("role_name");
 
-                        boolean matches = false;
-
-                        if (storedPassword != null) {
-                            // If it looks like a BCrypt hash, use BCrypt
-                            if (storedPassword.startsWith("$2a$") ||
-                                storedPassword.startsWith("$2b$") ||
-                                storedPassword.startsWith("$2y$")) {
-
-                                matches = PasswordUtil.verifyPassword(password, storedPassword);
-                            } else {
-                                // Legacy plain text match
-                                matches = storedPassword.equals(password);
-                            }
-                        }
+                        // Existing local demonstration passwords are migrated on startup.
+                        // No plaintext comparison fallback is allowed at login.
+                        boolean matches = PasswordUtil.isBcryptHash(storedPassword)
+                                && PasswordUtil.verifyPassword(password, storedPassword);
 
                         if (matches) {
                             user = new User();

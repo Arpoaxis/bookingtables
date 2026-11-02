@@ -2,6 +2,7 @@ package com.restaurant.servlet;
 
 import com.restaurant.dao.UserDao;
 import com.restaurant.model.User;
+import com.restaurant.util.PasswordUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -203,8 +204,13 @@ public class EmployeeManageServlet extends HttpServlet {
 				}
 
 				try {
-					userDao.createEmployee(restaurantId, firstName, lastName, email, phoneDigits, normalizedRole);
-					session.setAttribute("success", "Employee created successfully.");
+					String temporaryPassword = PasswordUtil.generateTemporaryPassword();
+					if (!userDao.createEmployee(restaurantId, firstName, lastName,
+							email, phoneDigits, normalizedRole, temporaryPassword)) {
+						throw new SQLException("Employee account was not created");
+					}
+					session.setAttribute("success",
+							"Employee created. One-time temporary password (share securely): " + temporaryPassword);
 				} catch (SQLException ex) {
 					ex.printStackTrace();
 					String msg = ex.getMessage();
@@ -242,11 +248,10 @@ public class EmployeeManageServlet extends HttpServlet {
 					return;
 				}
 
-				// Simple reset: set to 'changeme'
-				String newPassword = "changeme";
-				userDao.resetUserPassword(employeeId, newPassword);
+				String temporaryPassword = PasswordUtil.generateTemporaryPassword();
+				userDao.resetUserPassword(employeeId, PasswordUtil.hashPassword(temporaryPassword));
 				session.setAttribute("success",
-						"Password reset to 'changeme'. Ask the employee to change it on next login.");
+						"Employee password reset. One-time temporary password (share securely): " + temporaryPassword);
 
 				response.sendRedirect(request.getContextPath() + "/admin/employees");
 				return;

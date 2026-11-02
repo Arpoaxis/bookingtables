@@ -46,47 +46,41 @@ public class ForgotPasswordServlet extends HttpServlet {
         UserDao userDao = new UserDao(getServletContext());
         User user = userDao.findByEmail(email);
 
-        if (user == null) {
-            // Always show the same success message whether or not user exists
-            session.setAttribute("success",
-                    "If an account exists for that email, we've sent a reset email with a temporary password.");
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
+        // Do not reveal whether this email address has an account.
+        String genericMessage =
+                "If an account exists and email delivery is configured, a temporary password will be sent.";
+
+        if (user != null) {
+            try {
+                String temporaryPassword = PasswordUtil.generateTemporaryPassword();
+                String message = """
+                        Hi %s,
+
+                        A password reset was requested for your RestaurantBooking account.
+
+                        Temporary password: %s
+
+                        Sign in and change your password as soon as possible.
+                        If you did not request this, contact the application administrator.
+
+                        – Restaurant Booking
+                        """.formatted(user.getFirstName(), temporaryPassword);
+
+                // Do not invalidate the old password when SMTP is missing or fails.
+                // A full production workflow would use a time-limited reset token.
+                boolean delivered = EmailService.sendSimpleEmail(
+                        email, "RestaurantBooking password reset", message);
+                if (delivered) {
+                    userDao.resetUserPassword(user.getUserId(),
+                            PasswordUtil.hashPassword(temporaryPassword));
+                }
+            } catch (Exception ex) {
+                // Preserve the same browser response on account lookup/failure.
+                ex.printStackTrace();
+            }
         }
 
-
-        // Simple reset strategy: set password to "changeme"
-        String tempPassword = "changeme";
-
-        try {
-        	String tempHash = PasswordUtil.hashPassword(tempPassword);
-        	userDao.resetUserPassword(user.getUserId(), tempHash);
-
-
-            String subject = "Your RestaurantBooking password has been reset";
-            String body = """
-                Hi %s,
-
-                Your password has been reset.
-
-                Temporary password: %s
-
-                Please log in and change your password as soon as possible.
-
-                – Restaurant Booking
-                """.formatted(user.getFirstName(), tempPassword);
-
-            // Use the shared EmailService
-            EmailService.sendSimpleEmail(email, subject, body);
-
-            session.setAttribute("success",
-                    "If an account exists for that email, we've sent a reset email with a temporary password.");
-            response.sendRedirect(request.getContextPath() + "/login");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            request.setAttribute("error", "Could not reset password. Please try again later.");
-            request.getRequestDispatcher("/WEB-INF/jsp/login/forgot_password.jsp")
-                   .forward(request, response);
-        }
+        session.setAttribute("success", genericMessage);
+        response.sendRedirect(request.getContextPath() + "/login");
     }
 }

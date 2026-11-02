@@ -2,6 +2,7 @@ package com.restaurant.dao;
 
 import com.restaurant.model.User;
 import com.restaurant.util.DatabaseUtility;
+import com.restaurant.util.PasswordUtil;
 import jakarta.servlet.ServletContext;
 
 import java.sql.*;
@@ -167,7 +168,8 @@ public class UserDao {
             String lastName,
             String email,
             String phoneNumber,
-            String roleName) throws SQLException {
+            String roleName,
+            String initialPassword) throws SQLException {
 
     			// Simple username from email prefix
     			String username = email;
@@ -176,8 +178,8 @@ public class UserDao {
     				username = email.substring(0, atIndex);
     			}
 
-    			// Very basic default password for now
-    			String defaultPassword = "changeme";
+    			// The admin creates an unpredictable password for one-time handoff.
+    			String hashedPassword = PasswordUtil.hashPassword(initialPassword);
 
     			try (Connection conn = getConn()) {
     				conn.setAutoCommit(false);
@@ -199,7 +201,7 @@ public class UserDao {
     						ps.setString(idx++, firstName);
     						ps.setString(idx++, lastName);
     						ps.setString(idx++, email.toLowerCase());
-    						ps.setString(idx++, defaultPassword);
+    						ps.setString(idx++, hashedPassword);
     						ps.setString(idx++, phoneNumber);
     						ps.setInt(idx++, restaurantId);
     						ps.executeUpdate();
@@ -246,19 +248,19 @@ public class UserDao {
     				}
     			}
     }
- // Reset password for a user (e.g. to a default)
-    public void resetUserPassword(int userId, String newPassword) throws SQLException {
+ // Replace a password with a BCrypt hash, not plaintext.
+    public void resetUserPassword(int userId, String newPasswordHash) throws SQLException {
         String sql = "UPDATE users SET password = ? WHERE user_id = ?";
 
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, newPassword);
+            ps.setString(1, newPasswordHash);
             ps.setInt(2, userId);
             ps.executeUpdate();
         }
     }
     
- // Get the stored password string for a user (currently plain text).
+ // Get the stored BCrypt hash used for profile password checks.
     public String getPasswordForUser(int userId) {
         String sql = "SELECT password FROM users WHERE user_id = ?";
 

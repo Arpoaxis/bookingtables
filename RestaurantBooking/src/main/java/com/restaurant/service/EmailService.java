@@ -45,11 +45,11 @@ public class EmailService {
         });
     }
 
-    // Generic helper we can reuse for any email
-    public static void sendSimpleEmail(String to, String subject, String body) {
-        if (FROM_EMAIL == null || PASSWORD == null) {
-            System.out.println("[EmailService] Email not configured (missing email.properties); skipping send.");
-            return;
+    // Report delivery success so failed reset emails do not invalidate existing logins.
+    public static boolean sendSimpleEmail(String to, String subject, String body) {
+        if (FROM_EMAIL == null || FROM_EMAIL.isBlank() || PASSWORD == null || PASSWORD.isBlank()) {
+            System.out.println("[EmailService] Email not configured; skipping send.");
+            return false;
         }
 
         Session session = createSession();
@@ -63,10 +63,12 @@ public class EmailService {
 
             Transport.send(message);
             System.out.println("[EmailService] Email sent to: " + to);
+            return true;
 
         } catch (MessagingException e) {
             e.printStackTrace();
             System.out.println("[EmailService] Failed to send email to: " + to);
+            return false;
         }
     }
 
