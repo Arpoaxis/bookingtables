@@ -1,35 +1,41 @@
-# --- Build output ---
+# Build outputs (Maven, Eclipse and other IDEs)
 /target/
 **/target/
+**/build/
+*.class
+*.war
 
-# --- Eclipse workspace metadata ---
+# Local Eclipse/Tomcat workspace settings (not application WEB-INF)
+/workspace/
 .classpath
 .project
 .settings/
 .metadata/
 bin/
 
-# --- IntelliJ / JetBrains IDE ---
+# IntelliJ / JetBrains
 .idea/
 *.iml
 out/
 
-# --- OS-specific junk ---
+# Operating system files
 .DS_Store
 Thumbs.db
 
-# --- Logs and temporary files ---
+# Logs and temporary files
 *.log
 *.tmp
 
-# --- SQLite database ---
-# The app creates this automatically at runtime
+# Runtime SQLite database files (fictional seed CSVs stay tracked)
 WEB-INF/database/
 *.db
+*.sqlite
+*.sqlite3
 
-# --- Environment / config files (optional) ---
+# Secrets and locally configured credentials; keep .example templates
 *.env
 *.local
-RestaurantBooking/src/main/resources/email.properties
+**/email.properties
 
+# Local project working notes
 RestaurantBooking/doc/
