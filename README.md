@@ -19,7 +19,7 @@ The accompanying [portfolio case study](https://arpoaxis.github.io/projects/rest
 - Jakarta Servlets/JSP, Apache Tomcat, Maven (WAR packaging)
 - SQLite / JDBC database access
 - HTML, CSS and JavaScript interfaces
-- BCrypt utilities for hashed passwords (with legacy plaintext compatibility in the current academic code)
+- BCrypt authentication; existing plaintext demonstration passwords migrate to hashes in local SQLite at initialization
 
 The Maven application is under `RestaurantBooking/`:
 
@@ -48,7 +48,7 @@ The POM configures WAR packaging with final name `RestaurantBooking`; the expect
 
 All committed seeded customer, employee, booking, and role data were confirmed by a project participant as **fictional**. Seed accounts and passwords are for the course demonstration only. Do not reuse their credentials for any real service.
 
-This is an **academic prototype, not a production-ready reservation or authentication system**. Known security limitations in the preserved course code include a fallback for plaintext seed passwords and a predictable temporary password in the password-reset flow. Those require remediation before any real-world deployment. Do not host the application on the public internet with the supplied demo accounts or configurations.
+This is an **academic prototype, not a production-ready reservation or authentication system**. The updated source removes plaintext comparison at login, converts historical demo database values to BCrypt on startup, and uses unpredictable temporary passwords for reset and account-administration flows. The fictional seed CSVs and historical Git commits still contain demo plaintext strings. The email reset remains a temporary-password approach rather than a single-use expiring token. Account verification, rate limiting, secure employee/customer onboarding, and end-to-end security testing remain future work. New customer accounts created through staff waitlist entry require a configured email reset to choose a known password. Do not host the application on the public internet with the supplied demo accounts or configurations.
 
 `email.properties.example` contains placeholders; any working `email.properties` must remain untracked and must use privately managed credentials. Local Tomcat manager accounts and server configuration should also be created privately for each development environment.
 
@@ -58,4 +58,4 @@ This is an **academic prototype, not a production-ready reservation or authentic
 
 This repository is **public** for historical academic project review. It was built by a five-person team, and team permission to publish was confirmed. Source-code reuse should respect the team's contributions and the repository's existing `LICENCE` file.
 
-The original project and its development history are preserved. This README does not claim independent clean-machine reproduction, production deployment, or complete security validation.
+The original project and its development history are preserved. This README does not claim independent clean-machine reproduction, production deployment, or complete security validation. Authentication changes require local compilation and functional tests before being considered verified.

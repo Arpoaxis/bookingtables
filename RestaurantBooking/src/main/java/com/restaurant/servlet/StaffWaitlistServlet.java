@@ -153,8 +153,10 @@ public class StaffWaitlistServlet extends HttpServlet {
             }
             // 2) Or, if host checked "create account" and provided email, create a new user
             else if ("on".equalsIgnoreCase(createAccount) && email != null && !email.isBlank()) {
-                String tempPassword = "changeme"; // they can change it later
-                String hash = PasswordUtil.hashPassword(tempPassword);
+                // No shared initial password: customers establish a known
+                // password later through email reset if SMTP is configured.
+                String hash = PasswordUtil.hashPassword(
+                        PasswordUtil.generateTemporaryPassword());
                 User newCustomer = userDao.createCustomer(
                         firstName.trim(),
                         lastName.trim(),
@@ -163,7 +165,7 @@ public class StaffWaitlistServlet extends HttpServlet {
                         hash
                 );
                 userId = newCustomer.getUserId();
-                // optional: email them the temp password using your EmailService if you want
+                // The initial password is intentionally not exposed to staff.
             }
 
             String fullName = (firstName + " " + lastName).trim();

@@ -1,5 +1,7 @@
 package com.restaurant.listeners;
 
+import com.restaurant.util.PasswordUtil;
+
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -293,8 +295,49 @@ public class DatabaseInitializer implements ServletContextListener {
             	System.out.println("CSV seed data loaded successfully.");
             	System.out.println("Database ready at: " + dbFile.getAbsolutePath());
             }
+
+            // Also upgrade the built-in admin/host accounts and any existing
+            // local demo database whose passwords were previously plaintext.
+            upgradeLegacyPasswordHashes(url);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void upgradeLegacyPasswordHashes(String url) throws Exception {
+        try (Connection conn = DriverManager.getConnection(url)) {
+            conn.setAutoCommit(false);
+            try {
+                List<Integer> ids = new ArrayList<>();
+                List<String> oldValues = new ArrayList<>();
+                try (PreparedStatement query = conn.prepareStatement(
+                        "SELECT user_id, password FROM users WHERE password IS NOT NULL AND password <> ''");
+                     ResultSet rs = query.executeQuery()) {
+                    while (rs.next()) {
+                        String old = rs.getString("password");
+                        if (!PasswordUtil.isBcryptHash(old)) {
+                            ids.add(rs.getInt("user_id"));
+                            oldValues.add(old);
+                        }
+                    }
+                }
+                try (PreparedStatement update = conn.prepareStatement(
+                        "UPDATE users SET password = ? WHERE user_id = ? AND password = ?")) {
+                    for (int i = 0; i < ids.size(); i++) {
+                        String old = oldValues.get(i);
+                        update.setString(1, PasswordUtil.hashPassword(old));
+                        update.setInt(2, ids.get(i));
+                        update.setString(3, old);
+                        update.addBatch();
+                    }
+                    if (!ids.isEmpty()) update.executeBatch();
+                }
+                conn.commit();
+                System.out.println("Upgraded legacy demo password hashes: " + ids.size());
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
+            }
         }
     }
 
@@ -359,7 +402,7 @@ public class DatabaseInitializer implements ServletContextListener {
                         ps.setString(idx++, firstName);
                         ps.setString(idx++, lastName);
                         ps.setString(idx++, email);
-                        ps.setString(idx++, password);
+                        ps.setString(idx++, PasswordUtil.hashPassword(password));
                         ps.setString(idx++, phone);
 
                         if (restaurantId == null) {
